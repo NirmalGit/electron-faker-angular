@@ -1,7 +1,9 @@
-import { app, BrowserWindow, ipcMain } from "electron";
-import * as path from "path";
+import electron from "electron";
+import path from "path";
 
-let mainWindow: BrowserWindow | null = null;
+const { app, BrowserWindow, ipcMain } = electron;
+
+let mainWindow: electron.BrowserWindow | null = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -14,14 +16,12 @@ function createWindow() {
     }
   });
 
-  // In dev mode, load Angular's live server
   if (process.env["ELECTRON_DEV"]) {
     mainWindow.loadURL("http://localhost:4200");
     mainWindow.webContents.openDevTools();
   } else {
-    // In production, load the built Angular app
     mainWindow.loadFile(
-      path.join(__dirname, "../dist/electron-faker/browser/index.html")
+      path.join(__dirname, "../dist/electron-faker-angular/browser/index.html")
     );
   }
 
@@ -39,5 +39,5 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
-// Example IPC channel
 ipcMain.handle("app:getVersion", () => app.getVersion());
+ipcMain.handle("app:quit", () => app.quit());

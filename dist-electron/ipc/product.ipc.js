@@ -32,69 +32,69 @@ async function fetchFromAPI(endpoint) {
  * Register all product-related IPC handlers
  */
 function registerProductHandlers() {
-    electron_log_1.default.info('[IPC] Registering product IPC handlers...');
+    electron_log_1.default.info('⚡ [ELECTRON MAIN] Registering product IPC handlers...');
     // Get all products
     electron_1.ipcMain.handle('products:getAll', async () => {
-        electron_log_1.default.info('[IPC] Handling products:getAll');
+        electron_log_1.default.info('⚡ [ELECTRON MAIN] ◀── IPC Request: products:getAll');
         try {
             const products = await fetchFromAPI('/products');
-            electron_log_1.default.info(`[IPC] Successfully fetched ${products.length} products`);
+            electron_log_1.default.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${products.length} products`);
             return products;
         }
         catch (error) {
-            electron_log_1.default.error('[IPC] Error in products:getAll:', error);
+            electron_log_1.default.error('⚡ [ELECTRON MAIN] ✗ IPC Error in products:getAll:', error);
             throw error;
         }
     });
     // Get product by ID
     electron_1.ipcMain.handle('products:getById', async (event, id) => {
-        electron_log_1.default.info(`[IPC] Handling products:getById for ID: ${id}`);
+        electron_log_1.default.info(`⚡ [ELECTRON MAIN] ◀── IPC Request: products:getById (ID: ${id})`);
         try {
             const product = await fetchFromAPI(`/products/${id}`);
-            electron_log_1.default.info(`[IPC] Successfully fetched product: ${product.title}`);
+            electron_log_1.default.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched product '${product.title}'`);
             return product;
         }
         catch (error) {
-            electron_log_1.default.error(`[IPC] Error in products:getById for ID ${id}:`, error);
+            electron_log_1.default.error(`⚡ [ELECTRON MAIN] ✗ IPC Error in products:getById (ID ${id}):`, error);
             throw error;
         }
     });
     // Get all categories
     electron_1.ipcMain.handle('products:getCategories', async () => {
-        electron_log_1.default.info('[IPC] Handling products:getCategories');
+        electron_log_1.default.info('⚡ [ELECTRON MAIN] ◀── IPC Request: products:getCategories');
         try {
             const categories = await fetchFromAPI('/products/categories');
-            electron_log_1.default.info(`[IPC] Successfully fetched ${categories.length} categories`);
+            electron_log_1.default.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${categories.length} categories`);
             return categories;
         }
         catch (error) {
-            electron_log_1.default.error('[IPC] Error in products:getCategories:', error);
+            electron_log_1.default.error('⚡ [ELECTRON MAIN] ✗ IPC Error in products:getCategories:', error);
             throw error;
         }
     });
     // Get products by category
     electron_1.ipcMain.handle('products:getByCategory', async (event, category) => {
-        electron_log_1.default.info(`[IPC] Handling products:getByCategory for: ${category}`);
+        electron_log_1.default.info(`⚡ [ELECTRON MAIN] ◀── IPC Request: products:getByCategory (Category: '${category}')`);
         try {
             const products = await fetchFromAPI(`/products/category/${category}`);
-            electron_log_1.default.info(`[IPC] Successfully fetched ${products.length} products in category: ${category}`);
+            electron_log_1.default.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${products.length} products in category '${category}'`);
             return products;
         }
         catch (error) {
-            electron_log_1.default.error(`[IPC] Error in products:getByCategory for ${category}:`, error);
+            electron_log_1.default.error(`⚡ [ELECTRON MAIN] ✗ IPC Error in products:getByCategory (Category: '${category}'):`, error);
             throw error;
         }
     });
-    electron_log_1.default.info('[IPC] Product IPC handlers registered successfully');
+    electron_log_1.default.info('⚡ [ELECTRON MAIN] Product IPC handlers registered successfully ✓');
 }
 /**
  * Unregister all product-related IPC handlers (for cleanup)
  */
 function unregisterProductHandlers() {
-    electron_log_1.default.info('[IPC] Unregistering product IPC handlers...');
+    electron_log_1.default.info('⚡ [ELECTRON MAIN] Unregistering product IPC handlers...');
     electron_1.ipcMain.removeHandler('products:getAll');
     electron_1.ipcMain.removeHandler('products:getById');
     electron_1.ipcMain.removeHandler('products:getCategories');
     electron_1.ipcMain.removeHandler('products:getByCategory');
-    electron_log_1.default.info('[IPC] Product IPC handlers unregistered');
+    electron_log_1.default.info('⚡ [ELECTRON MAIN] Product IPC handlers unregistered');
 }

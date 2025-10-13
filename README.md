@@ -173,6 +173,30 @@ To execute unit tests with the [Karma](https://karma-runner.github.io) test runn
 ng test
 ```
 
+## 📊 Logging & Debugging
+
+The application includes comprehensive logging to distinguish between web API calls and Electron IPC calls:
+
+### Log Prefixes
+- `🌐 [WEB API]` - HTTP calls to FakeStoreAPI (Browser mode)
+- `⚡ [ELECTRON IPC]` - IPC calls from renderer process (Desktop mode)
+- `⚡ [ELECTRON MAIN]` - IPC handling in main process (Desktop mode)
+- `🖥️ Running in Electron mode` - Application started in desktop mode
+- `🌐 Running in Browser mode` - Application started in browser mode
+
+### Viewing Logs
+
+**Browser Mode (ng serve):**
+- Open browser DevTools (F12)
+- Console tab shows: `🌐 [WEB API]` logs
+
+**Desktop Mode (npm run electron:serve):**
+- Electron DevTools (opens automatically in dev mode)
+- Console tab shows: `⚡ [ELECTRON IPC]` logs
+- Terminal shows: `⚡ [ELECTRON MAIN]` logs
+
+**📚 See [LOGGING_GUIDE.md](./LOGGING_GUIDE.md) for detailed examples and debugging tips.**
+
 ## 🐛 Troubleshooting & Issue Resolution Log
 
 ### Issue #1: PowerShell Script Syntax Errors (Fixed)

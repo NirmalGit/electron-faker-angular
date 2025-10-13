@@ -30,73 +30,73 @@ async function fetchFromAPI(endpoint: string): Promise<any> {
  * Register all product-related IPC handlers
  */
 export function registerProductHandlers(): void {
-  log.info('[IPC] Registering product IPC handlers...');
+  log.info('⚡ [ELECTRON MAIN] Registering product IPC handlers...');
 
   // Get all products
   ipcMain.handle('products:getAll', async () => {
-    log.info('[IPC] Handling products:getAll');
+    log.info('⚡ [ELECTRON MAIN] ◀── IPC Request: products:getAll');
     try {
       const products = await fetchFromAPI('/products');
-      log.info(`[IPC] Successfully fetched ${products.length} products`);
+      log.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${products.length} products`);
       return products;
     } catch (error) {
-      log.error('[IPC] Error in products:getAll:', error);
+      log.error('⚡ [ELECTRON MAIN] ✗ IPC Error in products:getAll:', error);
       throw error;
     }
   });
 
   // Get product by ID
   ipcMain.handle('products:getById', async (event, id: number) => {
-    log.info(`[IPC] Handling products:getById for ID: ${id}`);
+    log.info(`⚡ [ELECTRON MAIN] ◀── IPC Request: products:getById (ID: ${id})`);
     try {
       const product = await fetchFromAPI(`/products/${id}`);
-      log.info(`[IPC] Successfully fetched product: ${product.title}`);
+      log.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched product '${product.title}'`);
       return product;
     } catch (error) {
-      log.error(`[IPC] Error in products:getById for ID ${id}:`, error);
+      log.error(`⚡ [ELECTRON MAIN] ✗ IPC Error in products:getById (ID ${id}):`, error);
       throw error;
     }
   });
 
   // Get all categories
   ipcMain.handle('products:getCategories', async () => {
-    log.info('[IPC] Handling products:getCategories');
+    log.info('⚡ [ELECTRON MAIN] ◀── IPC Request: products:getCategories');
     try {
       const categories = await fetchFromAPI('/products/categories');
-      log.info(`[IPC] Successfully fetched ${categories.length} categories`);
+      log.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${categories.length} categories`);
       return categories;
     } catch (error) {
-      log.error('[IPC] Error in products:getCategories:', error);
+      log.error('⚡ [ELECTRON MAIN] ✗ IPC Error in products:getCategories:', error);
       throw error;
     }
   });
 
   // Get products by category
   ipcMain.handle('products:getByCategory', async (event, category: string) => {
-    log.info(`[IPC] Handling products:getByCategory for: ${category}`);
+    log.info(`⚡ [ELECTRON MAIN] ◀── IPC Request: products:getByCategory (Category: '${category}')`);
     try {
       const products = await fetchFromAPI(`/products/category/${category}`);
-      log.info(`[IPC] Successfully fetched ${products.length} products in category: ${category}`);
+      log.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${products.length} products in category '${category}'`);
       return products;
     } catch (error) {
-      log.error(`[IPC] Error in products:getByCategory for ${category}:`, error);
+      log.error(`⚡ [ELECTRON MAIN] ✗ IPC Error in products:getByCategory (Category: '${category}'):`, error);
       throw error;
     }
   });
 
-  log.info('[IPC] Product IPC handlers registered successfully');
+  log.info('⚡ [ELECTRON MAIN] Product IPC handlers registered successfully ✓');
 }
 
 /**
  * Unregister all product-related IPC handlers (for cleanup)
  */
 export function unregisterProductHandlers(): void {
-  log.info('[IPC] Unregistering product IPC handlers...');
+  log.info('⚡ [ELECTRON MAIN] Unregistering product IPC handlers...');
   
   ipcMain.removeHandler('products:getAll');
   ipcMain.removeHandler('products:getById');
   ipcMain.removeHandler('products:getCategories');
   ipcMain.removeHandler('products:getByCategory');
   
-  log.info('[IPC] Product IPC handlers unregistered');
+  log.info('⚡ [ELECTRON MAIN] Product IPC handlers unregistered');
 }

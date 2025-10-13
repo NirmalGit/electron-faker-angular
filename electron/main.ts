@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
 import fs from "fs";
 import log from "electron-log";
+import { registerProductHandlers } from "./ipc/product.ipc";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -57,6 +58,15 @@ function createWindow() {
 
 app.whenReady().then(() => {
   log.info(`[app] Electron ready — ${isDev ? "development" : "production"}`);
+  
+  // Register IPC handlers
+  try {
+    registerProductHandlers();
+    log.info("[IPC] Product handlers registered successfully");
+  } catch (err) {
+    log.error(`[IPC] Failed to register product handlers: ${err}`);
+  }
+  
   createWindow();
 
   app.on("activate", () => {

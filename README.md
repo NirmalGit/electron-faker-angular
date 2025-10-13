@@ -330,6 +330,224 @@ if (isDev) {
 - [Angular CLI Reference](https://angular.io/cli)
 - [Electron Builder](https://www.electron.build/)
 
+---
+
+## 🎨 Phase 3: Full Architecture Implementation
+
+### Overview
+The application now implements a complete **dual-mode architecture** supporting both:
+- **Cloud Mode**: Web browser using HTTP API calls
+- **Desktop Mode**: Electron app using IPC communication
+
+### Architecture Components
+
+#### 1. **Core Services Layer**
+
+**IDataApi Interface** (`src/app/core/interfaces/idata-api.interface.ts`)
+```typescript
+abstract class IDataApi {
+  abstract getAllProducts(): Observable<Product[]>;
+  abstract getProductById(id: number): Observable<Product>;
+  abstract getCategories(): Observable<string[]>;
+  abstract getProductsByCategory(category: string): Observable<Product[]>;
+}
+```
+
+**WebApiService** (Cloud Mode - HTTP)
+- Implements `IDataApi` using Angular `HttpClient`
+- Calls FakeStoreAPI directly via HTTPS
+- Used when running in browser (`ng serve`)
+
+**ElectronApiService** (Desktop Mode - IPC)
+- Implements `IDataApi` using `window.electronAPI`
+- Communicates with Electron main process via IPC
+- Used when running in Electron (`npm run electron:serve`)
+
+**ProductService** (Business Logic)
+- Uses Angular Signals for reactive state management
+- Injects `IDataApi` (automatically resolved to correct implementation)
+- Provides computed signals: `products()`, `categories()`, `loading()`, `error()`
+
+#### 2. **Electron IPC Layer**
+
+**IPC Handlers** (`electron/ipc/product.ipc.ts`)
+```typescript
+registerProductHandlers():
+  - products:getAll → Fetch all products from FakeStoreAPI
+  - products:getById → Fetch single product by ID
+  - products:getCategories → Fetch all categories
+  - products:getByCategory → Fetch products in specific category
+```
+
+**Preload Script** (`electron/preload.ts`)
+```typescript
+window.electronAPI.products = {
+  getAll: () => ipcRenderer.invoke('products:getAll'),
+  getById: (id) => ipcRenderer.invoke('products:getById', id),
+  getCategories: () => ipcRenderer.invoke('products:getCategories'),
+  getByCategory: (category) => ipcRenderer.invoke('products:getByCategory', category)
+}
+```
+
+**Main Process** (`electron/main.ts`)
+- Registers IPC handlers before window creation
+- Loads environment-specific config (dev/prod)
+- Implements retry logic for Angular dev server
+
+#### 3. **UI Components**
+
+**Dashboard** (`src/app/features/dashboard/`)
+- Material cards grid layout
+- Category filter chips
+- Real-time product loading with signals
+- Loading spinner and error handling
+
+**Product List** (`src/app/features/products/product-list/`)
+- Search functionality
+- Category dropdown filter
+- Horizontal card layout with thumbnails
+
+**Product Detail** (`src/app/features/products/product-detail/`)
+- Full product information display
+- Image gallery
+- Rating stars visualization
+- Category chips (using updated `mat-chip-set`)
+
+**Shared Components**
+- `LoadingSpinnerComponent`: Material progress spinner
+- `ErrorMessageComponent`: Error display with retry action
+- `NavbarComponent`: Material toolbar with app title
+
+#### 4. **Application Flow Diagram**
+
+```mermaid
+graph TB
+    Start[Application Start] --> Mode{Running Mode?}
+    
+    Mode -->|Browser| CloudMode[Cloud Mode]
+    Mode -->|Electron| DesktopMode[Desktop Mode]
+    
+    CloudMode --> WebAPI[WebApiService]
+    DesktopMode --> ElectronAPI[ElectronApiService]
+    
+    WebAPI --> HTTP[HTTP Request]
+    ElectronAPI --> IPC[IPC Invoke]
+    
+    HTTP --> FakeStore[FakeStoreAPI]
+    IPC --> MainProcess[Electron Main Process]
+    MainProcess --> FakeStore
+    
+    FakeStore --> Response[Product Data]
+    Response --> Service[ProductService]
+    Service --> Signals[Angular Signals]
+    Signals --> UI[UI Components]
+    
+    style CloudMode fill:#4CAF50
+    style DesktopMode fill:#2196F3
+    style Service fill:#FF9800
+    style Signals fill:#9C27B0
+```
+
+### Testing Results
+
+#### ✅ Desktop Mode (Electron) - Verified October 14, 2025
+```
+[IPC] Product handlers registered successfully
+[IPC] Handling products:getAll → Successfully fetched 20 products
+[IPC] Handling products:getCategories → Successfully fetched 4 categories
+[IPC] Handling products:getByCategory for: electronics → Successfully fetched 6 products
+[IPC] Handling products:getByCategory for: jewelery → Successfully fetched 4 products
+[IPC] Handling products:getByCategory for: men's clothing → Successfully fetched 4 products
+[IPC] Handling products:getByCategory for: women's clothing → Successfully fetched 6 products
+```
+
+**Features Tested:**
+- ✅ Dashboard loads all products via IPC
+- ✅ Category filtering works for all 4 categories
+- ✅ Product detail view loads correctly
+- ✅ ElectronApiService → Preload → IPC → Main Process → FakeStoreAPI flow verified
+- ✅ Loading states and error handling working
+- ✅ Angular Signals reactive updates confirmed
+
+#### 🔄 Cloud Mode (Browser) - To Be Tested
+Run `ng serve` and verify:
+- WebApiService makes direct HTTP calls
+- All features work identically to desktop mode
+- No IPC communication occurs
+
+### Key Implementation Details
+
+**Environment Detection** (`src/app/app.config.ts`)
+```typescript
+{
+  provide: IDataApi,
+  useFactory: (http: HttpClient) => {
+    if (typeof window !== 'undefined' && (window as any).electronAPI) {
+      return new ElectronApiService(); // Desktop Mode
+    }
+    return new WebApiService(http); // Cloud Mode
+  },
+  deps: [HttpClient]
+}
+```
+
+**Material Design Integration**
+- Theme: Indigo-Pink palette
+- Components: Cards, Toolbar, Sidenav, Buttons, Icons, Chips, Progress Spinner
+- Responsive layout with CSS Grid and Flexbox
+- Smooth animations and transitions
+
+**TypeScript Definitions** (`src/typings/electron.d.ts`)
+```typescript
+interface Window {
+  electronAPI: {
+    getAppVersion: () => Promise<string>;
+    getAppConfig: () => Promise<any>;
+    quitApp: () => void;
+    products: {
+      getAll: () => Promise<Product[]>;
+      getById: (id: number) => Promise<Product>;
+      getCategories: () => Promise<string[]>;
+      getByCategory: (category: string) => Promise<Product[]>;
+    };
+  };
+}
+```
+
+### Build & Run Commands
+
+```bash
+# Desktop Mode (Electron + Angular)
+npm run electron:serve
+
+# Cloud Mode (Browser only)
+ng serve
+
+# Compile Electron TypeScript
+npm run electron:build
+
+# Build for Production
+npm run electron:dist
+```
+
+### Troubleshooting
+
+**IPC Not Working?**
+1. Check `dist-electron/` has compiled files
+2. Verify `registerProductHandlers()` called in `main.ts`
+3. Check Electron console for IPC logs
+
+**Material Components Not Loading?**
+1. Verify `@angular/material` installed: `npm list @angular/material`
+2. Check component imports in each feature module
+3. Ensure Material theme configured in `styles.scss`
+
+**"mat-chip-list not found" Error?**
+- Fixed in latest version - using `mat-chip-set` instead
+- `mat-chip-list` deprecated in Material v15+
+
+---
+
 ```bash
 ng e2e
 ```

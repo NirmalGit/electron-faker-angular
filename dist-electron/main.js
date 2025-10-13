@@ -7,6 +7,7 @@ const electron_1 = require("electron");
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const electron_log_1 = __importDefault(require("electron-log"));
+const product_ipc_1 = require("./ipc/product.ipc");
 let mainWindow = null;
 // --- Load Config ---
 const isDev = !!process.env["ELECTRON_DEV"];
@@ -58,6 +59,14 @@ function createWindow() {
 }
 electron_1.app.whenReady().then(() => {
     electron_log_1.default.info(`[app] Electron ready — ${isDev ? "development" : "production"}`);
+    // Register IPC handlers
+    try {
+        (0, product_ipc_1.registerProductHandlers)();
+        electron_log_1.default.info("[IPC] Product handlers registered successfully");
+    }
+    catch (err) {
+        electron_log_1.default.error(`[IPC] Failed to register product handlers: ${err}`);
+    }
     createWindow();
     electron_1.app.on("activate", () => {
         if (electron_1.BrowserWindow.getAllWindows().length === 0)

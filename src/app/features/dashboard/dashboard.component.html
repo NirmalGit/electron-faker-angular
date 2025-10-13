@@ -1,0 +1,93 @@
+<div class="dashboard-container">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <h1>Product Dashboard</h1>
+    <p class="subtitle">Browse our collection of {{ productService.productsCount() }} products</p>
+  </div>
+
+  <!-- Category Filter -->
+  @if (productService.categories().length > 0) {
+    <div class="category-filter">
+      <mat-chip-listbox>
+        <mat-chip-option (click)="loadAllProducts()" selected>
+          <mat-icon>apps</mat-icon>
+          All Products
+        </mat-chip-option>
+        @for (category of productService.categories(); track category) {
+          <mat-chip-option (click)="filterByCategory(category)">
+            {{ category }}
+          </mat-chip-option>
+        }
+      </mat-chip-listbox>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (productService.loading()) {
+    <app-loading-spinner 
+      [diameter]="60" 
+      message="Loading products...">
+    </app-loading-spinner>
+  }
+
+  <!-- Error State -->
+  @if (productService.error() && !productService.loading()) {
+    <app-error-message
+      title="Failed to Load Products"
+      [message]="productService.error() || 'Unknown error'"
+      (retry)="onRetry()">
+    </app-error-message>
+  }
+
+  <!-- Products Grid -->
+  @if (!productService.loading() && !productService.error() && productService.hasProducts()) {
+    <div class="products-grid">
+      @for (product of productService.products(); track product.id) {
+        <mat-card class="product-card">
+          <div class="product-image-container">
+            <img 
+              mat-card-image 
+              [src]="product.image" 
+              [alt]="product.title"
+              class="product-image">
+          </div>
+          <mat-card-content>
+            <h3 class="product-title">{{ truncateText(product.title, 60) }}</h3>
+            <p class="product-category">{{ product.category }}</p>
+            <p class="product-description">{{ truncateText(product.description, 80) }}</p>
+            <div class="product-footer">
+              <div class="product-price">${{ product.price.toFixed(2) }}</div>
+              <div class="product-rating">
+                <mat-icon class="rating-icon">star</mat-icon>
+                <span>{{ product.rating.rate }} ({{ product.rating.count }})</span>
+              </div>
+            </div>
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-raised-button color="primary" [routerLink]="['/products', product.id]">
+              <mat-icon>visibility</mat-icon>
+              View Details
+            </button>
+            <button mat-button>
+              <mat-icon>shopping_cart</mat-icon>
+              Add to Cart
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      }
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!productService.loading() && !productService.error() && !productService.hasProducts()) {
+    <div class="empty-state">
+      <mat-icon class="empty-icon">shopping_bag</mat-icon>
+      <h2>No Products Found</h2>
+      <p>There are no products available at the moment.</p>
+      <button mat-raised-button color="primary" (click)="onRetry()">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+  }
+</div>

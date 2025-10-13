@@ -1,0 +1,74 @@
+<div class="product-list-container">
+  <div class="header">
+    <h1>All Products</h1>
+    
+    <!-- Search and Filter Controls -->
+    <div class="controls">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search products</mat-label>
+        <input matInput [(ngModel)]="searchTerm" (ngModelChange)="onSearch()" placeholder="Search by name, description...">
+        <mat-icon matPrefix>search</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="category-field">
+        <mat-label>Category</mat-label>
+        <mat-select [(ngModel)]="selectedCategory" (selectionChange)="onCategoryChange()">
+          <mat-option value="all">All Categories</mat-option>
+          @for (category of productService.categories(); track category) {
+            <mat-option [value]="category">{{ category }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (productService.loading()) {
+    <app-loading-spinner message="Loading products..."></app-loading-spinner>
+  }
+
+  <!-- Error State -->
+  @if (productService.error() && !productService.loading()) {
+    <app-error-message
+      title="Failed to Load Products"
+      [message]="productService.error() || 'Unknown error'"
+      (retry)="onRetry()">
+    </app-error-message>
+  }
+
+  <!-- Product List -->
+  @if (!productService.loading() && !productService.error()) {
+    <div class="products-list">
+      @for (product of filteredProducts; track product.id) {
+        <mat-card class="product-item">
+          <div class="product-content">
+            <img [src]="product.image" [alt]="product.title" class="product-thumbnail">
+            <div class="product-details">
+              <h3>{{ product.title }}</h3>
+              <p class="category">{{ product.category }}</p>
+              <p class="description">{{ product.description }}</p>
+              <div class="meta">
+                <span class="price">${{ product.price.toFixed(2) }}</span>
+                <span class="rating">
+                  <mat-icon>star</mat-icon>
+                  {{ product.rating.rate }} ({{ product.rating.count }})
+                </span>
+              </div>
+            </div>
+            <div class="product-actions">
+              <button mat-raised-button color="primary" [routerLink]="['/products', product.id]">
+                View Details
+              </button>
+            </div>
+          </div>
+        </mat-card>
+      } @empty {
+        <div class="empty-state">
+          <mat-icon>search_off</mat-icon>
+          <h2>No products found</h2>
+          <p>Try adjusting your search or filter criteria</p>
+        </div>
+      }
+    </div>
+  }
+</div>

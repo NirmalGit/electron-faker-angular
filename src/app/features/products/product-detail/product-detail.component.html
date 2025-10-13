@@ -1,0 +1,107 @@
+<div class="product-detail-container">
+  <!-- Loading State -->
+  @if (productService.loading()) {
+    <app-loading-spinner message="Loading product details..."></app-loading-spinner>
+  }
+
+  <!-- Error State -->
+  @if (productService.error() && !productService.loading()) {
+    <app-error-message
+      title="Failed to Load Product"
+      [message]="productService.error() || 'Unknown error'"
+      (retry)="onRetry()">
+    </app-error-message>
+  }
+
+  <!-- Product Details -->
+  @if (productService.selectedProduct() && !productService.loading() && !productService.error()) {
+    <div class="product-detail">
+      <!-- Back Button -->
+      <button mat-button class="back-button" (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Products
+      </button>
+
+      <mat-card class="detail-card">
+        <div class="product-layout">
+          <!-- Product Image -->
+          <div class="image-section">
+            <img 
+              [src]="productService.selectedProduct()!.image" 
+              [alt]="productService.selectedProduct()!.title"
+              class="product-image">
+          </div>
+
+          <!-- Product Information -->
+          <div class="info-section">
+            <h1 class="product-title">{{ productService.selectedProduct()!.title }}</h1>
+            
+            <mat-chip-list>
+              <mat-chip class="category-chip">
+                {{ productService.selectedProduct()!.category }}
+              </mat-chip>
+            </mat-chip-list>
+
+            <div class="rating-section">
+              <div class="rating-stars">
+                @for (star of [1,2,3,4,5]; track star) {
+                  <mat-icon [class.filled]="star <= productService.selectedProduct()!.rating.rate">
+                    {{ star <= productService.selectedProduct()!.rating.rate ? 'star' : 'star_border' }}
+                  </mat-icon>
+                }
+              </div>
+              <span class="rating-text">
+                {{ productService.selectedProduct()!.rating.rate }} 
+                ({{ productService.selectedProduct()!.rating.count }} reviews)
+              </span>
+            </div>
+
+            <mat-divider class="divider"></mat-divider>
+
+            <div class="price-section">
+              <h2 class="price">${{ productService.selectedProduct()!.price.toFixed(2) }}</h2>
+              <span class="price-label">Best Price Guaranteed</span>
+            </div>
+
+            <mat-divider class="divider"></mat-divider>
+
+            <div class="description-section">
+              <h3>Description</h3>
+              <p>{{ productService.selectedProduct()!.description }}</p>
+            </div>
+
+            <mat-divider class="divider"></mat-divider>
+
+            <!-- Action Buttons -->
+            <div class="actions">
+              <button mat-raised-button color="primary" class="add-cart-btn" (click)="addToCart()">
+                <mat-icon>shopping_cart</mat-icon>
+                Add to Cart
+              </button>
+              <button mat-raised-button color="accent">
+                <mat-icon>favorite_border</mat-icon>
+                Add to Wishlist
+              </button>
+            </div>
+
+            <!-- Additional Info -->
+            <div class="additional-info">
+              <div class="info-item">
+                <mat-icon>local_shipping</mat-icon>
+                <span>Free shipping on orders over $50</span>
+              </div>
+              <div class="info-item">
+                <mat-icon>cached</mat-icon>
+                <span>30-day return policy</span>
+              </div>
+              <div class="info-item">
+                <mat-icon>verified_user</mat-icon>
+                <span>1 year warranty</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+  }
+</div>

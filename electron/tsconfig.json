@@ -6,6 +6,7 @@
     "outDir": "../dist-electron",
     "rootDir": "./",
     "esModuleInterop": true,
+    "allowJs": true,
     "strict": true,
     "skipLibCheck": true
   },

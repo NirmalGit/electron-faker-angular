@@ -1,9 +1,7 @@
-import electron from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
 
-const { app, BrowserWindow, ipcMain } = electron;
-
-let mainWindow: electron.BrowserWindow | null = null;
+let mainWindow: BrowserWindow | null = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -17,8 +15,17 @@ function createWindow() {
   });
 
   if (process.env["ELECTRON_DEV"]) {
-    mainWindow.loadURL("http://localhost:4200");
-    mainWindow.webContents.openDevTools();
+    // Wait for Angular dev server to be ready
+    const loadAngularApp = async () => {
+      try {
+        await mainWindow!.loadURL("http://localhost:4200");
+        mainWindow!.webContents.openDevTools();
+      } catch (error) {
+        console.log("Angular dev server not ready, retrying in 2 seconds...");
+        setTimeout(loadAngularApp, 2000);
+      }
+    };
+    loadAngularApp();
   } else {
     mainWindow.loadFile(
       path.join(__dirname, "../dist/electron-faker-angular/browser/index.html")

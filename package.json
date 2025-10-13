@@ -11,7 +11,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-   "electron:serve": "cross-env ELECTRON_DEV=true concurrently \"ng serve\" \"ts-node electron/main.ts\"",
+    "electron:serve": "cross-env ELECTRON_DEV=true concurrently \"ng serve\" \"npm run electron:serve:dev\"",
+    "electron:serve:dev": "tsc -p electron/tsconfig.json && electron dist-electron/main.js",
     "electron:build": "tsc -p electron/tsconfig.json",
     "electron:dist": "npm run build && npm run electron:build && electron-builder"
   },

@@ -394,34 +394,44 @@ window.electronAPI.products = {
 - Loads environment-specific config (dev/prod)
 - Implements retry logic for Angular dev server
 
-#### 3. **Authentication & Error Handling** 🔐
+#### 3. **Authentication & Error Handling** 🔐🔒
 
-The application includes a comprehensive JWT authentication system with automatic token refresh and error handling.
+The application includes a **production-ready JWT authentication system** with HttpOnly cookies for maximum security.
+
+**🔒 Security Features:**
+- **HttpOnly Cookie Storage** - Tokens stored in HttpOnly cookies (XSS protection)
+- **No localStorage** - Eliminates JavaScript token access vulnerability
+- **Automatic Cookie Handling** - Browser manages cookie transmission
+- **CSRF Protection** - SameSite cookie flag prevents cross-site attacks
+- **HTTPS Enforcement** - Secure flag ensures encrypted transmission
+- **Automatic Token Refresh** - Seamless session management on 401 errors
 
 **Key Features:**
-- JWT token management (access + refresh tokens)
+- JWT token management via HttpOnly cookies (secure from XSS)
 - Automatic token refresh on 401 errors
 - HTTP request retry after token refresh
 - Comprehensive error handling (400, 401, 403, 404, 500+)
 - Route protection with auth guards
-- Secure token storage
+- Cookie-based authentication (no manual Authorization headers)
 
 **Core Services:**
 
 **TokenService** (`src/app/core/services/token.service.ts`)
-- Manages JWT tokens in localStorage
-- Checks token expiration with buffer time
-- Decodes JWT payloads
+- Manages authentication state (NOT token storage)
+- User info in memory only
 - Angular Signal for auth state
+- **Security:** Tokens stored in HttpOnly cookies by backend, inaccessible to JavaScript
 
 **AuthService** (`src/app/core/services/auth.service.ts`)
-- Login/logout operations
-- Token refresh with request queueing
+- Login/logout operations with `withCredentials: true`
+- Token refresh using refresh token cookie
 - User state management
 - Integration with backend auth API
+- **Security:** All requests include credentials for automatic cookie transmission
 
 **AuthInterceptor** (`src/app/core/interceptors/auth.interceptor.ts`)
-- Adds JWT token to all HTTP requests
+- Automatically includes credentials (cookies) in requests
+- **NO Authorization header** - Browser sends cookies automatically
 - Handles 400 (Bad Request) with validation errors
 - Handles 401 (Unauthorized) with automatic token refresh
 - Handles 403 (Forbidden) access denied
@@ -435,8 +445,19 @@ The application includes a comprehensive JWT authentication system with automati
 - `guestGuard` - Prevents authenticated users from accessing login
 
 **📚 Detailed Documentation:**
+- **[🔒 HttpOnly Cookie Migration Guide](./HTTPONLY_COOKIE_MIGRATION.md)** - **Security improvement explanation & backend requirements**
 - **[Authentication Implementation Guide](./AUTH_IMPLEMENTATION_GUIDE.md)** - Complete guide with code examples
 - **[Flow Diagrams](./AUTH_FLOW_DIAGRAMS.md)** - Visual diagrams showing request flows and error handling
+- **[Authentication Summary](./AUTH_SUMMARY.md)** - Quick reference and usage examples
+- **[Architecture Diagrams](./ARCHITECTURE_DIAGRAMS.md)** - System architecture with Mermaid diagrams
+- **[Quick Reference](./QUICK_REFERENCE.md)** - Commands, configuration, and troubleshooting
+
+**🔐 Security Comparison:**
+
+| Approach | XSS Vulnerable | JavaScript Access | CSRF Protection | Production Ready |
+|----------|----------------|-------------------|-----------------|------------------|
+| ❌ localStorage | YES | ✅ Full Access | ❌ None | ❌ NO |
+| ✅ HttpOnly Cookies | NO | ❌ No Access | ✅ SameSite Flag | ✅ YES |
 
 **Error Handling Examples:**
 

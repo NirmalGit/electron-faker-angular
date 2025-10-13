@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, BehaviorSubject } from 'rxjs';
-import { catchError, tap, switchMap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { TokenService } from './token.service';
 
 /**
@@ -13,19 +13,18 @@ export interface LoginRequest {
 }
 
 export interface AuthResponse {
-  access_token: string;
-  refresh_token: string;
-  expires_in?: number;
-  token_type?: string;
-}
-
-export interface RefreshTokenRequest {
-  refresh_token: string;
+  user: any;  // User information (no tokens in response!)
+  message?: string;
 }
 
 /**
- * AuthService - Handles authentication operations
- * Login, logout, token refresh, and user management
+ * AuthService - Handles authentication operations with HttpOnly cookies
+ * 
+ * SECURITY: Tokens are stored in HttpOnly cookies by the backend
+ * - Cookies are automatically sent with each request by the browser
+ * - No manual token management in frontend
+ * - Protected from XSS attacks
+ * - Backend sets: HttpOnly, Secure, SameSite flags
  */
 @Injectable({
   providedIn: 'root'
@@ -37,98 +36,105 @@ export class AuthService {
   // Signal for current user state
   currentUser = signal<any>(null);
 
-  // BehaviorSubject for token refresh in progress
-  private refreshTokenInProgress = false;
-  private refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
-
   constructor(
     private http: HttpClient,
     private tokenService: TokenService
   ) {
-    // Load user info on service initialization
-    this.loadUserInfo();
+    // Check if user is authenticated on initialization
+    this.checkAuthStatus();
   }
 
   /**
    * Login with username and password
+   * Backend will set HttpOnly cookie in response
    * @param credentials Login credentials
    * @returns Observable of auth response
    */
   login(credentials: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.AUTH_API_URL}/login`, credentials)
-      .pipe(
-        tap(response => this.handleAuthResponse(response)),
-        catchError(this.handleAuthError)
-      );
+    return this.http.post<AuthResponse>(
+      `${this.AUTH_API_URL}/login`, 
+      credentials,
+      { withCredentials: true }  // Important: Send cookies
+    ).pipe(
+      tap(response => this.handleAuthResponse(response)),
+      catchError(this.handleAuthError)
+    );
   }
 
   /**
-   * Refresh the access token using refresh token
+   * Refresh the access token using refresh token cookie
+   * Backend will set new HttpOnly cookie in response
    * @returns Observable of auth response
    */
   refreshToken(): Observable<AuthResponse> {
-    const refreshToken = this.tokenService.getRefreshToken();
-
-    if (!refreshToken) {
-      return throwError(() => new Error('No refresh token available'));
-    }
-
-    // Prevent multiple simultaneous refresh requests
-    if (this.refreshTokenInProgress) {
-      // Wait for the ongoing refresh to complete
-      return this.refreshTokenSubject.pipe(
-        switchMap(token => {
-          if (token) {
-            return this.createMockAuthResponse(token);
-          }
-          return throwError(() => new Error('Token refresh failed'));
-        })
-      );
-    }
-
-    this.refreshTokenInProgress = true;
-    this.refreshTokenSubject.next(null);
-
-    const request: RefreshTokenRequest = { refresh_token: refreshToken };
-
-    return this.http.post<AuthResponse>(`${this.AUTH_API_URL}/refresh`, request)
-      .pipe(
-        tap(response => {
+    return this.http.post<AuthResponse>(
+      `${this.AUTH_API_URL}/refresh`,
+      {},
+      { withCredentials: true }  // Important: Send cookies
+    ).pipe(
+      tap(response => {
+        console.log('Token refreshed successfully');
+        if (response.user) {
           this.handleAuthResponse(response);
-          this.refreshTokenInProgress = false;
-          this.refreshTokenSubject.next(response.access_token);
-        }),
-        catchError(error => {
-          this.refreshTokenInProgress = false;
-          this.refreshTokenSubject.next(null);
-          this.logout();
-          return throwError(() => error);
-        })
-      );
+        }
+      }),
+      catchError(error => {
+        console.error('Token refresh failed');
+        this.logout();
+        return throwError(() => error);
+      })
+    );
   }
 
   /**
-   * Logout user and clear tokens
+   * Logout user and clear cookies
+   * Backend will clear HttpOnly cookies
    */
-  logout(): void {
-    // Optional: Call backend logout endpoint
-    const refreshToken = this.tokenService.getRefreshToken();
-    if (refreshToken) {
-      this.http.post(`${this.AUTH_API_URL}/logout`, { refresh_token: refreshToken })
-        .subscribe({
-          next: () => console.log('Logged out from server'),
-          error: (error) => console.error('Logout error:', error)
-        });
-    }
+  logout(): Observable<any> {
+    return this.http.post(
+      `${this.AUTH_API_URL}/logout`,
+      {},
+      { withCredentials: true }  // Important: Send cookies
+    ).pipe(
+      tap(() => {
+        this.tokenService.clearAuthState();
+        this.currentUser.set(null);
+        console.log('Logged out successfully');
+      }),
+      catchError(error => {
+        // Even if logout fails, clear local state
+        this.tokenService.clearAuthState();
+        this.currentUser.set(null);
+        return throwError(() => error);
+      })
+    );
+  }
 
-    // Clear local tokens and user info
-    this.tokenService.clearTokens();
-    this.currentUser.set(null);
+  /**
+   * Check authentication status by calling /me endpoint
+   * If successful, user is authenticated (cookie is valid)
+   */
+  checkAuthStatus(): void {
+    this.http.get<{ user: any }>(
+      `${this.AUTH_API_URL}/me`,
+      { withCredentials: true }
+    ).subscribe({
+      next: (response) => {
+        if (response.user) {
+          this.tokenService.setUserInfo(response.user);
+          this.currentUser.set(response.user);
+        }
+      },
+      error: () => {
+        // Not authenticated or session expired
+        this.tokenService.setAuthenticated(false);
+      }
+    });
   }
 
   /**
    * Check if user is authenticated
-   * @returns true if user has valid token
+   * @returns true if user has valid session
    */
   isAuthenticated(): boolean {
     return this.tokenService.hasValidToken();
@@ -139,21 +145,9 @@ export class AuthService {
    * @param response Auth response from server
    */
   private handleAuthResponse(response: AuthResponse): void {
-    this.tokenService.setTokens(
-      response.access_token,
-      response.refresh_token,
-      response.expires_in
-    );
-    this.loadUserInfo();
-  }
-
-  /**
-   * Load user information from token
-   */
-  private loadUserInfo(): void {
-    const userInfo = this.tokenService.getUserInfo();
-    if (userInfo) {
-      this.currentUser.set(userInfo);
+    if (response.user) {
+      this.tokenService.setUserInfo(response.user);
+      this.currentUser.set(response.user);
     }
   }
 
@@ -193,31 +187,19 @@ export class AuthService {
   }
 
   /**
-   * Create a mock auth response (for testing purposes)
-   * @param token Access token
-   * @returns Observable of mock auth response
-   */
-  private createMockAuthResponse(token: string): Observable<AuthResponse> {
-    return new Observable(observer => {
-      observer.next({
-        access_token: token,
-        refresh_token: this.tokenService.getRefreshToken()!,
-        expires_in: 3600
-      });
-      observer.complete();
-    });
-  }
-
-  /**
    * Mock login for development/testing
-   * Remove this in production and use real backend
+   * In real implementation, this won't work with HttpOnly cookies
+   * You need a real backend that sets the cookies
    */
   mockLogin(username: string): void {
-    const mockResponse: AuthResponse = {
-      access_token: 'mock_access_token_' + Date.now(),
-      refresh_token: 'mock_refresh_token_' + Date.now(),
-      expires_in: 3600
+    console.warn('Mock login only sets local state. Real HttpOnly cookies need backend.');
+    const mockUser = {
+      id: 1,
+      username: username,
+      email: `${username}@example.com`,
+      role: 'user'
     };
-    this.handleAuthResponse(mockResponse);
+    this.tokenService.setUserInfo(mockUser);
+    this.currentUser.set(mockUser);
   }
 }

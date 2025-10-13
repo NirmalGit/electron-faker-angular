@@ -1,136 +1,83 @@
 import { Injectable, signal } from '@angular/core';
 
 /**
- * TokenService - Manages JWT tokens and refresh tokens
- * Stores tokens in localStorage for persistence across sessions
+ * TokenService - Manages authentication state
+ * 
+ * SECURITY NOTE: Tokens are stored in HttpOnly cookies (managed by backend)
+ * - HttpOnly cookies cannot be accessed by JavaScript (XSS protection)
+ * - Secure flag ensures cookies only sent over HTTPS
+ * - SameSite flag prevents CSRF attacks
+ * 
+ * This service only manages authentication state, not token storage.
  */
 @Injectable({
   providedIn: 'root'
 })
 export class TokenService {
-  private readonly ACCESS_TOKEN_KEY = 'access_token';
-  private readonly REFRESH_TOKEN_KEY = 'refresh_token';
-  private readonly TOKEN_EXPIRY_KEY = 'token_expiry';
-
   // Signal to track authentication state
-  isAuthenticated = signal<boolean>(this.hasValidToken());
+  // This is set to true after successful login, false after logout
+  isAuthenticated = signal<boolean>(false);
+  
+  // Store user info in memory only (not sensitive token data)
+  private userInfo: any = null;
 
   constructor() {
-    // Check token validity on service initialization
-    this.checkTokenExpiry();
+    // Check if user has valid session on initialization
+    // This will be verified by making a request to the backend
+    this.checkAuthStatus();
   }
 
   /**
-   * Store access token and refresh token
-   * @param accessToken JWT access token
-   * @param refreshToken JWT refresh token
-   * @param expiresIn Token expiration time in seconds
+   * Set authentication state to true
+   * Called after successful login
    */
-  setTokens(accessToken: string, refreshToken: string, expiresIn?: number): void {
-    localStorage.setItem(this.ACCESS_TOKEN_KEY, accessToken);
-    localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+  setAuthenticated(authenticated: boolean): void {
+    this.isAuthenticated.set(authenticated);
+  }
 
-    if (expiresIn) {
-      const expiryTime = Date.now() + expiresIn * 1000;
-      localStorage.setItem(this.TOKEN_EXPIRY_KEY, expiryTime.toString());
-    }
-
+  /**
+   * Store user information in memory (NOT in localStorage)
+   * @param user User information from decoded token (done by backend)
+   */
+  setUserInfo(user: any): void {
+    this.userInfo = user;
     this.isAuthenticated.set(true);
   }
 
   /**
-   * Get the current access token
-   * @returns Access token or null if not available
+   * Get user information from memory
+   * @returns User info object or null
    */
-  getAccessToken(): string | null {
-    return localStorage.getItem(this.ACCESS_TOKEN_KEY);
+  getUserInfo(): any {
+    return this.userInfo;
   }
 
   /**
-   * Get the refresh token
-   * @returns Refresh token or null if not available
-   */
-  getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
-  }
-
-  /**
-   * Check if token is expired
-   * @returns true if token is expired or about to expire
-   */
-  isTokenExpired(): boolean {
-    const expiryTime = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
-    if (!expiryTime) {
-      return false; // No expiry set, assume valid
-    }
-
-    // Add 30 second buffer before actual expiry
-    const bufferTime = 30 * 1000;
-    return Date.now() >= (parseInt(expiryTime) - bufferTime);
-  }
-
-  /**
-   * Check if user has a valid token
-   * @returns true if valid token exists
+   * Check if user has a valid authentication session
+   * This should be verified by making a request to the backend
+   * @returns true if authenticated
    */
   hasValidToken(): boolean {
-    const token = this.getAccessToken();
-    return token !== null && !this.isTokenExpired();
+    return this.isAuthenticated();
   }
 
   /**
-   * Clear all tokens (logout)
+   * Clear authentication state (logout)
+   * HttpOnly cookies will be cleared by backend on logout endpoint
    */
-  clearTokens(): void {
-    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-    localStorage.removeItem(this.TOKEN_EXPIRY_KEY);
+  clearAuthState(): void {
+    this.userInfo = null;
     this.isAuthenticated.set(false);
   }
 
   /**
-   * Check token expiry periodically
+   * Check authentication status by making a request to backend
+   * Backend will verify the HttpOnly cookie
    */
-  private checkTokenExpiry(): void {
-    // Check every minute
-    setInterval(() => {
-      if (this.isTokenExpired()) {
-        this.isAuthenticated.set(false);
-      }
-    }, 60000);
-  }
-
-  /**
-   * Decode JWT token to get payload (without verification)
-   * @param token JWT token string
-   * @returns Decoded payload object
-   */
-  decodeToken(token: string): any {
-    try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      return JSON.parse(jsonPayload);
-    } catch (error) {
-      console.error('Error decoding token:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Get user information from token
-   * @returns User info object or null
-   */
-  getUserInfo(): any {
-    const token = this.getAccessToken();
-    if (!token) return null;
-
-    const payload = this.decodeToken(token);
-    return payload;
+  private checkAuthStatus(): void {
+    // This will be implemented by making a request to /auth/me endpoint
+    // If the request succeeds, user is authenticated
+    // If it fails with 401, user is not authenticated
+    // The actual implementation is in AuthService
   }
 }

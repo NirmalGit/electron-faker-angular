@@ -15,24 +15,28 @@ import { AuthService } from '../services/auth.service';
 /**
  * AuthInterceptor - Intercepts HTTP requests and responses
  * 
+ * SECURITY: Works with HttpOnly cookies for authentication
+ * - Browser automatically sends cookies with requests
+ * - No manual Authorization header needed
+ * - Protected from XSS attacks
+ * 
  * Handles:
- * 1. Adding JWT token to outgoing requests
+ * 1. Ensuring credentials (cookies) are sent with requests
  * 2. 401 errors - Automatic token refresh and retry
  * 3. 400 errors - Bad request handling
  * 4. 403 errors - Forbidden access
- * 5. 500 errors - Server errors
+ * 5. 404 errors - Not found handling
+ * 6. 500 errors - Server errors
  */
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   private isRefreshing = false;
-  private refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
+  private refreshTokenSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
-  // Requests that should not include auth token
-  private readonly EXCLUDED_URLS = [
-    '/auth/login',
-    '/auth/register',
-    '/auth/refresh',
-    'fakestoreapi.com' // External API that doesn't need our JWT
+  // External APIs that don't use our authentication
+  private readonly EXTERNAL_APIS = [
+    'fakestoreapi.com',
+    'external-api.com'
   ];
 
   constructor(
@@ -44,9 +48,12 @@ export class AuthInterceptor implements HttpInterceptor {
    * Intercept HTTP requests
    */
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Add auth token to request if available and not excluded
-    if (this.shouldAddToken(request)) {
-      request = this.addAuthToken(request);
+    // Add credentials to requests that need authentication
+    // This tells the browser to include HttpOnly cookies
+    if (this.shouldIncludeCredentials(request)) {
+      request = request.clone({
+        withCredentials: true  // IMPORTANT: Include cookies in request
+      });
     }
 
     // Handle the request and catch errors
@@ -64,32 +71,13 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   /**
-   * Add JWT token to request headers
+   * Check if request should include credentials (cookies)
    * @param request HTTP request
-   * @returns Cloned request with auth header
+   * @returns true if credentials should be included
    */
-  private addAuthToken(request: HttpRequest<any>): HttpRequest<any> {
-    const token = this.tokenService.getAccessToken();
-
-    if (token) {
-      return request.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-    }
-
-    return request;
-  }
-
-  /**
-   * Check if request should include auth token
-   * @param request HTTP request
-   * @returns true if token should be added
-   */
-  private shouldAddToken(request: HttpRequest<any>): boolean {
-    // Don't add token to excluded URLs
-    return !this.EXCLUDED_URLS.some(url => request.url.includes(url));
+  private shouldIncludeCredentials(request: HttpRequest<any>): boolean {
+    // Don't include credentials for external APIs
+    return !this.EXTERNAL_APIS.some(url => request.url.includes(url));
   }
 
   /**
@@ -160,6 +148,8 @@ export class AuthInterceptor implements HttpInterceptor {
 
   /**
    * Handle 401 Unauthorized errors - Attempt token refresh
+   * With HttpOnly cookies, the browser automatically sends cookies
+   * We just need to call the refresh endpoint
    */
   private handle401Error(
     request: HttpRequest<any>,
@@ -169,33 +159,34 @@ export class AuthInterceptor implements HttpInterceptor {
     // Don't retry auth endpoints
     if (request.url.includes('/auth/')) {
       console.error('401 Unauthorized on auth endpoint');
-      this.authService.logout();
+      // Clear auth state on login failure
+      this.tokenService.clearAuthState();
       return throwError(() => error);
     }
 
     // If not already refreshing, start refresh process
     if (!this.isRefreshing) {
       this.isRefreshing = true;
-      this.refreshTokenSubject.next(null);
+      this.refreshTokenSubject.next(false);
 
-      console.log('Token expired, attempting refresh...');
+      console.log('Session expired, attempting token refresh...');
 
       return this.authService.refreshToken().pipe(
-        switchMap(response => {
+        switchMap(() => {
           this.isRefreshing = false;
-          this.refreshTokenSubject.next(response.access_token);
+          this.refreshTokenSubject.next(true);
           
           console.log('Token refreshed successfully, retrying request');
           
-          // Retry the original request with new token
-          return next.handle(this.addAuthToken(request));
+          // Retry the original request - cookies automatically included
+          return next.handle(request.clone({ withCredentials: true }));
         }),
         catchError(refreshError => {
           this.isRefreshing = false;
-          this.refreshTokenSubject.next(null);
+          this.refreshTokenSubject.next(false);
           
           console.error('Token refresh failed, logging out');
-          this.authService.logout();
+          this.authService.logout().subscribe();
           
           this.showErrorNotification('Session Expired', 'Please log in again');
           
@@ -205,11 +196,11 @@ export class AuthInterceptor implements HttpInterceptor {
     } else {
       // Wait for token refresh to complete, then retry
       return this.refreshTokenSubject.pipe(
-        filter(token => token !== null),
+        filter(refreshComplete => refreshComplete === true),
         take(1),
-        switchMap(token => {
-          console.log('Using refreshed token for queued request');
-          return next.handle(this.addAuthToken(request));
+        switchMap(() => {
+          console.log('Using refreshed session for queued request');
+          return next.handle(request.clone({ withCredentials: true }));
         })
       );
     }

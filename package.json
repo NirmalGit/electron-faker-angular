@@ -1,27 +1,22 @@
 {
   "name": "electron-faker-angular",
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Enterprise Angular 20 + Electron 38 + Bootstrap + Angular Material desktop app",
+  "main": "dist-electron/main.js",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "ng:serve": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "electron:serve": "ELECTRON_DEV=true concurrently \"ng serve\" \"ts-node electron/main.ts\"",
+    "electron:build": "tsc -p electron/tsconfig.json",
+    "electron:dist": "npm run build && npm run electron:build && electron-builder"
   },
-  "prettier": {
-    "printWidth": 100,
-    "singleQuote": true,
-    "overrides": [
-      {
-        "files": "*.html",
-        "options": {
-          "parser": "angular"
-        }
-      }
-    ]
-  },
-  "private": true,
   "dependencies": {
+    "@angular/animations": "^20.3.0",
     "@angular/cdk": "^20.2.8",
     "@angular/common": "^20.3.0",
     "@angular/compiler": "^20.3.0",
@@ -44,6 +39,7 @@
     "@types/jasmine": "~5.1.0",
     "concurrently": "^9.2.1",
     "electron": "^38.2.2",
+    "electron-builder": "^25.0.0",
     "jasmine-core": "~5.9.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
@@ -52,5 +48,37 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.2"
+  },
+  "build": {
+    "appId": "com.electronfaker.app",
+    "productName": "Electron Faker Angular",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist-electron/**/*",
+      "dist/electron-faker/browser/**/*"
+    ],
+    "mac": {
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  },
+  "prettier": {
+    "printWidth": 100,
+    "singleQuote": true,
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
   }
 }

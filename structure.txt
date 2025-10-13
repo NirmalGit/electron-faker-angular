@@ -1,4 +1,8 @@
-﻿├── public
+﻿├── electron
+│   ├── main.ts
+│   ├── preload.ts
+│   ├── tsconfig.json
+├── public
 │   ├── favicon.ico
 ├── src
 │   ├── app

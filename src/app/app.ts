@@ -11,4 +11,10 @@ import { MatButtonModule } from '@angular/material/button';
 })
 export class App {
   protected readonly title = signal('electron-faker-angular');
+    version = signal<string>("(unknown)");
+
+  async getVersion() {
+    const v = await window.electronAPI.getAppVersion();
+    this.version.set(v);
+  }
 }

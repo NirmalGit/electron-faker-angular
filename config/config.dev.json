@@ -1,0 +1,5 @@
+{
+  "environment": "development",
+  "appUrl": "http://localhost:4200",
+  "enableDevTools": true
+}

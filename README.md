@@ -52,8 +52,37 @@ electron-faker-angular/
 │   ├── main.ts             # Angular bootstrap
 │   └── styles.scss         # Global styles
 ├── public/                 # Static assets
+├── config/                 # Environment configuration files
+│   ├── config.dev.json     # Development config
+│   └── config.prod.json    # Production config
 └── package.json            # Project dependencies and scripts
 ```
+
+## 📊 Project Structure (Mermaid Diagram)
+
+```mermaid
+flowchart TD
+    A[dist-electron/]
+    B[electron/]
+    C[src/]
+    D[public/]
+    E[package.json]
+    F[config/]
+    A -->|main.js, preload.js| A
+    B -->|main.ts, preload.ts, tsconfig.json| B
+    C -->|app/, typings/, index.html, main.ts, styles.scss| C
+    F -->|config.dev.json, config.prod.json| F
+    subgraph Project Root
+        A
+        B
+        C
+        D
+        F
+        E
+    end
+```
+
+This diagram visually represents the main folders and files in your project. You can view it with a Mermaid preview extension in VS Code or on supported platforms.
 
 ## 🛠️ Available Scripts
 
@@ -161,6 +190,57 @@ const loadAngularApp = async () => {
 };
 loadAngularApp();
 ```
+
+### Issue #4: Config-based Environment Loading & Logging (Improvement)
+**Change**: Enhanced `electron/main.ts` to load environment-specific configuration files and improved logging.
+
+**Details**:
+- Loads `config.dev.json` or `config.prod.json` based on the environment (development or production)
+- Uses the config to determine the Angular app URL and whether to enable DevTools
+- Adds logging for startup, config loading, window creation, and error handling
+- Exposes config to renderer process via IPC
+
+**Files Modified**: `electron/main.ts`, `config/config.dev.json`, `config/config.prod.json`
+
+**Code Example**:
+```typescript
+// --- Environment + Config ---
+const isDev = !!process.env["ELECTRON_DEV"];
+const configFile = isDev ? "config.dev.json" : "config.prod.json";
+const configPath = path.join(__dirname, `../config/${configFile}`);
+
+let config: any = {};
+try {
+  config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+  log.info(`[startup] Loaded config: ${configPath}`);
+} catch (err) {
+  log.error(`[startup] Failed to load config: ${err}`);
+}
+
+// ...
+if (isDev) {
+  const loadAngularApp = async () => {
+    try {
+      await mainWindow!.loadURL(config.appUrl || "http://localhost:4200");
+      if (config.enableDevTools) mainWindow!.webContents.openDevTools();
+      log.info("[startup] Loaded Angular dev server successfully");
+    } catch (error) {
+      log.warn("Angular dev server not ready, retrying in 2 seconds...");
+      setTimeout(loadAngularApp, 2000);
+    }
+  };
+  loadAngularApp();
+} else {
+  const filePath = path.join(__dirname, "../dist/electron-faker-angular/browser/index.html");
+  mainWindow.loadFile(filePath);
+  log.info(`[startup] Loaded production build: ${filePath}`);
+}
+```
+
+**How to Use**:
+- Place your environment configs in the `config/` folder
+- The app will automatically pick the correct config based on the environment
+- All key startup events and errors are now logged for easier debugging
 
 ## 📝 Development Notes
 

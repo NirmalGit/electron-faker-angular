@@ -1,0 +1,5 @@
+{
+  "environment": "production",
+  "appUrl": "file://../dist/electron-faker-angular/browser/index.html",
+  "enableDevTools": false
+}

@@ -394,7 +394,103 @@ window.electronAPI.products = {
 - Loads environment-specific config (dev/prod)
 - Implements retry logic for Angular dev server
 
-#### 3. **UI Components**
+#### 3. **Authentication & Error Handling** 🔐
+
+The application includes a comprehensive JWT authentication system with automatic token refresh and error handling.
+
+**Key Features:**
+- JWT token management (access + refresh tokens)
+- Automatic token refresh on 401 errors
+- HTTP request retry after token refresh
+- Comprehensive error handling (400, 401, 403, 404, 500+)
+- Route protection with auth guards
+- Secure token storage
+
+**Core Services:**
+
+**TokenService** (`src/app/core/services/token.service.ts`)
+- Manages JWT tokens in localStorage
+- Checks token expiration with buffer time
+- Decodes JWT payloads
+- Angular Signal for auth state
+
+**AuthService** (`src/app/core/services/auth.service.ts`)
+- Login/logout operations
+- Token refresh with request queueing
+- User state management
+- Integration with backend auth API
+
+**AuthInterceptor** (`src/app/core/interceptors/auth.interceptor.ts`)
+- Adds JWT token to all HTTP requests
+- Handles 400 (Bad Request) with validation errors
+- Handles 401 (Unauthorized) with automatic token refresh
+- Handles 403 (Forbidden) access denied
+- Handles 404 (Not Found) resources
+- Handles 500+ (Server Errors)
+- Retries failed requests after successful token refresh
+- Queues requests during token refresh
+
+**Route Guards** (`src/app/core/guards/auth.guard.ts`)
+- `authGuard` - Protects authenticated routes
+- `guestGuard` - Prevents authenticated users from accessing login
+
+**📚 Detailed Documentation:**
+- **[Authentication Implementation Guide](./AUTH_IMPLEMENTATION_GUIDE.md)** - Complete guide with code examples
+- **[Flow Diagrams](./AUTH_FLOW_DIAGRAMS.md)** - Visual diagrams showing request flows and error handling
+
+**Error Handling Examples:**
+
+```typescript
+// 400 Bad Request - Validation Errors
+{
+  status: 400,
+  message: "Validation failed: Email is required, Password is too short",
+  errors: [...]
+}
+
+// 401 Unauthorized - Automatic Token Refresh
+Request → 401 Error → Refresh Token → Retry Request → Success
+
+// 403 Forbidden - Access Denied
+{
+  status: 403,
+  message: "Access Forbidden: You do not have permission"
+}
+
+// 500 Server Error
+{
+  status: 500,
+  message: "Server error occurred. Please try again later."
+}
+```
+
+**Token Refresh Flow:**
+```
+1. Request with expired token → 401 Error
+2. Interceptor catches 401 → Calls /auth/refresh
+3. Server returns new tokens → Update localStorage
+4. Retry original request with new token → Success
+5. Process any queued requests waiting for refresh
+```
+
+**Usage in Routes:**
+```typescript
+// Protect routes requiring authentication
+{
+  path: 'dashboard',
+  component: DashboardComponent,
+  canActivate: [authGuard]  // Protected route
+}
+
+// Prevent authenticated users from accessing login
+{
+  path: 'login',
+  component: LoginComponent,
+  canActivate: [guestGuard]  // Only for guests
+}
+```
+
+#### 4. **UI Components**
 
 **Dashboard** (`src/app/features/dashboard/`)
 - Material cards grid layout

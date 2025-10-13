@@ -42,3 +42,16 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 package-lock.json
+/yarn.lock
+.pnpm-debug.log 
+.pnp.*
+.eslintcache
+.jest-test-results.json
+.vitest-test-results.json
+.idea/
+*.iml 
+*.iws
+out/
+.vs/
+.env
+.env.*.local

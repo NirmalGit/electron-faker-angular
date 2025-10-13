@@ -84,6 +84,58 @@ flowchart TD
 
 This diagram visually represents the main folders and files in your project. You can view it with a Mermaid preview extension in VS Code or on supported platforms.
 
+## ⚡ Electron Main Process Workflow (Mermaid)
+
+```mermaid
+flowchart TD
+    Start([App Start])
+    LoadConfig{Load Config}
+    DevMode{Is Dev Mode?}
+    AngularDev[Load Angular Dev Server]
+    ProdBuild[Load Production Build]
+    Retry[Retry if not ready]
+    Window[Create Main Window]
+    IPC[Setup IPC Channels]
+    End([App Ready])
+
+    Start --> LoadConfig --> DevMode
+    DevMode -- Yes --> AngularDev --> Window
+    AngularDev -- Retry Needed --> Retry --> AngularDev
+    DevMode -- No --> ProdBuild --> Window
+    Window --> IPC --> End
+```
+
+This diagram shows the startup logic of your Electron main process, including config loading, dev/prod branching, retry logic, and IPC setup.
+
+## 🏛️ Application Architecture Flow (Mermaid)
+
+```mermaid
+flowchart LR
+    subgraph Electron Main Process
+        Main[main.ts]
+        Config[config.dev.json / config.prod.json]
+        Main -- "Loads Config" --> Config
+        Main -- "Creates" --> Window[BrowserWindow]
+        Main -- "Sets up" --> IPC[IPC Channels]
+    end
+
+    subgraph Preload Script
+        Preload[preload.ts]
+        Window -- "Injects" --> Preload
+        Preload -- "Exposes API" --> Renderer
+    end
+
+    subgraph "Renderer (Angular)"
+        Renderer[Angular App]
+        Renderer -- "Requests Config, Version, etc." --> IPC
+        IPC -- "Responds" --> Renderer
+    end
+
+    Main -- "Loads" --> Renderer
+```
+
+This diagram shows the high-level architecture and data flow between Electron's main process, the preload script, and the Angular renderer process, including config usage and IPC communication.
+
 ## 🛠️ Available Scripts
 
 - `npm run electron:serve` - Run in development mode (Angular + Electron)

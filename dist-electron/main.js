@@ -5,8 +5,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
 const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
+const electron_log_1 = __importDefault(require("electron-log"));
 let mainWindow = null;
+// --- Load Config ---
+const isDev = !!process.env["ELECTRON_DEV"];
+const configFile = isDev ? "config.dev.json" : "config.prod.json";
+const configPath = path_1.default.join(__dirname, `../config/${configFile}`);
+let config = {};
+try {
+    config = JSON.parse(fs_1.default.readFileSync(configPath, "utf-8"));
+    electron_log_1.default.info(`[startup] Loaded config: ${configPath}`);
+}
+catch (err) {
+    electron_log_1.default.error(`[startup] Failed to load config: ${err}`);
+}
 function createWindow() {
+    electron_log_1.default.info("[startup] Creating main window...");
     mainWindow = new electron_1.BrowserWindow({
         width: 1200,
         height: 800,
@@ -16,26 +31,33 @@ function createWindow() {
             nodeIntegration: false
         }
     });
-    if (process.env["ELECTRON_DEV"]) {
-        // Wait for Angular dev server to be ready
+    if (isDev) {
         const loadAngularApp = async () => {
             try {
-                await mainWindow.loadURL("http://localhost:4200");
-                mainWindow.webContents.openDevTools();
+                await mainWindow.loadURL(config.appUrl || "http://localhost:4200");
+                if (config.enableDevTools)
+                    mainWindow.webContents.openDevTools();
+                electron_log_1.default.info("[startup] Angular dev server loaded successfully.");
             }
-            catch (error) {
-                console.log("Angular dev server not ready, retrying in 2 seconds...");
+            catch {
+                electron_log_1.default.warn("Angular dev server not ready, retrying in 2s...");
                 setTimeout(loadAngularApp, 2000);
             }
         };
         loadAngularApp();
     }
     else {
-        mainWindow.loadFile(path_1.default.join(__dirname, "../dist/electron-faker-angular/browser/index.html"));
+        const filePath = path_1.default.join(__dirname, "../dist/electron-faker-angular/browser/index.html");
+        mainWindow.loadFile(filePath);
+        electron_log_1.default.info(`[startup] Loaded production build: ${filePath}`);
     }
-    mainWindow.on("closed", () => (mainWindow = null));
+    mainWindow.on("closed", () => {
+        mainWindow = null;
+        electron_log_1.default.info("[window] Closed");
+    });
 }
 electron_1.app.whenReady().then(() => {
+    electron_log_1.default.info(`[app] Electron ready — ${isDev ? "development" : "production"}`);
     createWindow();
     electron_1.app.on("activate", () => {
         if (electron_1.BrowserWindow.getAllWindows().length === 0)
@@ -43,8 +65,12 @@ electron_1.app.whenReady().then(() => {
     });
 });
 electron_1.app.on("window-all-closed", () => {
-    if (process.platform !== "darwin")
+    if (process.platform !== "darwin") {
+        electron_log_1.default.info("[app] All windows closed — quitting app.");
         electron_1.app.quit();
+    }
 });
+// --- IPC Channels ---
 electron_1.ipcMain.handle("app:getVersion", () => electron_1.app.getVersion());
+electron_1.ipcMain.handle("app:getConfig", () => config);
 electron_1.ipcMain.handle("app:quit", () => electron_1.app.quit());

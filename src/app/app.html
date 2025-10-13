@@ -1,12 +1,11 @@
-<div class="container mt-4">
+<div class="container mt-5">
   <mat-card>
-    <mat-card-title> App Version: {{ version() }}</mat-card-title>
+    <mat-card-title>{{ title() }}</mat-card-title>
     <mat-card-content>
-      <p class="text-muted">This combines Material components with Bootstrap layout.</p>
-      <button mat-raised-button color="primary" class="me-3">Material Button</button>
-      <button class="btn btn-success">Bootstrap Button</button>
+      <p><strong>Version:</strong> {{ version() }}</p>
+      <p><strong>Environment:</strong> {{ config()?.environment }}</p>
+      <button mat-raised-button color="primary" (click)="getVersion()">Refresh Version</button>
+      <button mat-raised-button color="warn" class="ms-3" (click)="quitApp()">Quit</button>
     </mat-card-content>
   </mat-card>
 </div>
-
-<router-outlet></router-outlet>

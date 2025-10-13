@@ -5,7 +5,7 @@ import log from "electron-log";
 
 let mainWindow: BrowserWindow | null = null;
 
-// --- Environment + Config ---
+// --- Load Config ---
 const isDev = !!process.env["ELECTRON_DEV"];
 const configFile = isDev ? "config.dev.json" : "config.prod.json";
 const configPath = path.join(__dirname, `../config/${configFile}`);
@@ -32,14 +32,13 @@ function createWindow() {
   });
 
   if (isDev) {
-    // Wait for Angular dev server to be ready
     const loadAngularApp = async () => {
       try {
         await mainWindow!.loadURL(config.appUrl || "http://localhost:4200");
         if (config.enableDevTools) mainWindow!.webContents.openDevTools();
-        log.info("[startup] Loaded Angular dev server successfully");
-      } catch (error) {
-        log.warn("Angular dev server not ready, retrying in 2 seconds...");
+        log.info("[startup] Angular dev server loaded successfully.");
+      } catch {
+        log.warn("Angular dev server not ready, retrying in 2s...");
         setTimeout(loadAngularApp, 2000);
       }
     };
@@ -51,13 +50,13 @@ function createWindow() {
   }
 
   mainWindow.on("closed", () => {
-    log.info("[window] Closed");
     mainWindow = null;
+    log.info("[window] Closed");
   });
 }
 
 app.whenReady().then(() => {
-  log.info(`[app] Electron ready - Mode: ${isDev ? "Development" : "Production"}`);
+  log.info(`[app] Electron ready — ${isDev ? "development" : "production"}`);
   createWindow();
 
   app.on("activate", () => {
@@ -67,7 +66,7 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
-    log.info("[app] All windows closed, quitting...");
+    log.info("[app] All windows closed — quitting app.");
     app.quit();
   }
 });

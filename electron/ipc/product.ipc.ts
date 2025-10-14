@@ -7,6 +7,17 @@ import log from 'electron-log';
  */
 
 const API_BASE_URL = 'https://fakestoreapi.com';
+const IS_DEV = process.env.ELECTRON_DEV === 'true';
+
+// Configure logging based on environment
+if (IS_DEV) {
+  log.transports.console.level = 'debug';
+  log.transports.file.level = 'debug';
+} else {
+  // Production: Only log errors
+  log.transports.console.level = 'error';
+  log.transports.file.level = 'warn';
+}
 
 /**
  * Fetch data from FakeStoreAPI
@@ -30,14 +41,20 @@ async function fetchFromAPI(endpoint: string): Promise<any> {
  * Register all product-related IPC handlers
  */
 export function registerProductHandlers(): void {
-  log.info('⚡ [ELECTRON MAIN] Registering product IPC handlers...');
+  if (IS_DEV) {
+    log.info('⚡ [ELECTRON MAIN] Registering product IPC handlers...');
+  }
 
   // Get all products
   ipcMain.handle('products:getAll', async () => {
-    log.info('⚡ [ELECTRON MAIN] ◀── IPC Request: products:getAll');
+    if (IS_DEV) {
+      log.info('⚡ [ELECTRON MAIN] ◀── IPC Request: products:getAll');
+    }
     try {
       const products = await fetchFromAPI('/products');
-      log.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${products.length} products`);
+      if (IS_DEV) {
+        log.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${products.length} products`);
+      }
       return products;
     } catch (error) {
       log.error('⚡ [ELECTRON MAIN] ✗ IPC Error in products:getAll:', error);
@@ -47,10 +64,14 @@ export function registerProductHandlers(): void {
 
   // Get product by ID
   ipcMain.handle('products:getById', async (event, id: number) => {
-    log.info(`⚡ [ELECTRON MAIN] ◀── IPC Request: products:getById (ID: ${id})`);
+    if (IS_DEV) {
+      log.info(`⚡ [ELECTRON MAIN] ◀── IPC Request: products:getById (ID: ${id})`);
+    }
     try {
       const product = await fetchFromAPI(`/products/${id}`);
-      log.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched product '${product.title}'`);
+      if (IS_DEV) {
+        log.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched product '${product.title}'`);
+      }
       return product;
     } catch (error) {
       log.error(`⚡ [ELECTRON MAIN] ✗ IPC Error in products:getById (ID ${id}):`, error);
@@ -60,10 +81,14 @@ export function registerProductHandlers(): void {
 
   // Get all categories
   ipcMain.handle('products:getCategories', async () => {
-    log.info('⚡ [ELECTRON MAIN] ◀── IPC Request: products:getCategories');
+    if (IS_DEV) {
+      log.info('⚡ [ELECTRON MAIN] ◀── IPC Request: products:getCategories');
+    }
     try {
       const categories = await fetchFromAPI('/products/categories');
-      log.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${categories.length} categories`);
+      if (IS_DEV) {
+        log.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${categories.length} categories`);
+      }
       return categories;
     } catch (error) {
       log.error('⚡ [ELECTRON MAIN] ✗ IPC Error in products:getCategories:', error);
@@ -73,10 +98,14 @@ export function registerProductHandlers(): void {
 
   // Get products by category
   ipcMain.handle('products:getByCategory', async (event, category: string) => {
-    log.info(`⚡ [ELECTRON MAIN] ◀── IPC Request: products:getByCategory (Category: '${category}')`);
+    if (IS_DEV) {
+      log.info(`⚡ [ELECTRON MAIN] ◀── IPC Request: products:getByCategory (Category: '${category}')`);
+    }
     try {
       const products = await fetchFromAPI(`/products/category/${category}`);
-      log.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${products.length} products in category '${category}'`);
+      if (IS_DEV) {
+        log.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${products.length} products in category '${category}'`);
+      }
       return products;
     } catch (error) {
       log.error(`⚡ [ELECTRON MAIN] ✗ IPC Error in products:getByCategory (Category: '${category}'):`, error);
@@ -84,19 +113,25 @@ export function registerProductHandlers(): void {
     }
   });
 
-  log.info('⚡ [ELECTRON MAIN] Product IPC handlers registered successfully ✓');
+  if (IS_DEV) {
+    log.info('⚡ [ELECTRON MAIN] Product IPC handlers registered successfully ✓');
+  }
 }
 
 /**
  * Unregister all product-related IPC handlers (for cleanup)
  */
 export function unregisterProductHandlers(): void {
-  log.info('⚡ [ELECTRON MAIN] Unregistering product IPC handlers...');
+  if (IS_DEV) {
+    log.info('⚡ [ELECTRON MAIN] Unregistering product IPC handlers...');
+  }
   
   ipcMain.removeHandler('products:getAll');
   ipcMain.removeHandler('products:getById');
   ipcMain.removeHandler('products:getCategories');
   ipcMain.removeHandler('products:getByCategory');
   
-  log.info('⚡ [ELECTRON MAIN] Product IPC handlers unregistered');
+  if (IS_DEV) {
+    log.info('⚡ [ELECTRON MAIN] Product IPC handlers unregistered');
+  }
 }

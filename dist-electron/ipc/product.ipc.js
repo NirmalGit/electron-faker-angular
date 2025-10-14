@@ -12,6 +12,17 @@ const electron_log_1 = __importDefault(require("electron-log"));
  * These handlers communicate with FakeStoreAPI and return data to the renderer process
  */
 const API_BASE_URL = 'https://fakestoreapi.com';
+const IS_DEV = process.env.ELECTRON_DEV === 'true';
+// Configure logging based on environment
+if (IS_DEV) {
+    electron_log_1.default.transports.console.level = 'debug';
+    electron_log_1.default.transports.file.level = 'debug';
+}
+else {
+    // Production: Only log errors
+    electron_log_1.default.transports.console.level = 'error';
+    electron_log_1.default.transports.file.level = 'warn';
+}
 /**
  * Fetch data from FakeStoreAPI
  */
@@ -32,13 +43,19 @@ async function fetchFromAPI(endpoint) {
  * Register all product-related IPC handlers
  */
 function registerProductHandlers() {
-    electron_log_1.default.info('⚡ [ELECTRON MAIN] Registering product IPC handlers...');
+    if (IS_DEV) {
+        electron_log_1.default.info('⚡ [ELECTRON MAIN] Registering product IPC handlers...');
+    }
     // Get all products
     electron_1.ipcMain.handle('products:getAll', async () => {
-        electron_log_1.default.info('⚡ [ELECTRON MAIN] ◀── IPC Request: products:getAll');
+        if (IS_DEV) {
+            electron_log_1.default.info('⚡ [ELECTRON MAIN] ◀── IPC Request: products:getAll');
+        }
         try {
             const products = await fetchFromAPI('/products');
-            electron_log_1.default.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${products.length} products`);
+            if (IS_DEV) {
+                electron_log_1.default.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${products.length} products`);
+            }
             return products;
         }
         catch (error) {
@@ -48,10 +65,14 @@ function registerProductHandlers() {
     });
     // Get product by ID
     electron_1.ipcMain.handle('products:getById', async (event, id) => {
-        electron_log_1.default.info(`⚡ [ELECTRON MAIN] ◀── IPC Request: products:getById (ID: ${id})`);
+        if (IS_DEV) {
+            electron_log_1.default.info(`⚡ [ELECTRON MAIN] ◀── IPC Request: products:getById (ID: ${id})`);
+        }
         try {
             const product = await fetchFromAPI(`/products/${id}`);
-            electron_log_1.default.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched product '${product.title}'`);
+            if (IS_DEV) {
+                electron_log_1.default.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched product '${product.title}'`);
+            }
             return product;
         }
         catch (error) {
@@ -61,10 +82,14 @@ function registerProductHandlers() {
     });
     // Get all categories
     electron_1.ipcMain.handle('products:getCategories', async () => {
-        electron_log_1.default.info('⚡ [ELECTRON MAIN] ◀── IPC Request: products:getCategories');
+        if (IS_DEV) {
+            electron_log_1.default.info('⚡ [ELECTRON MAIN] ◀── IPC Request: products:getCategories');
+        }
         try {
             const categories = await fetchFromAPI('/products/categories');
-            electron_log_1.default.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${categories.length} categories`);
+            if (IS_DEV) {
+                electron_log_1.default.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${categories.length} categories`);
+            }
             return categories;
         }
         catch (error) {
@@ -74,10 +99,14 @@ function registerProductHandlers() {
     });
     // Get products by category
     electron_1.ipcMain.handle('products:getByCategory', async (event, category) => {
-        electron_log_1.default.info(`⚡ [ELECTRON MAIN] ◀── IPC Request: products:getByCategory (Category: '${category}')`);
+        if (IS_DEV) {
+            electron_log_1.default.info(`⚡ [ELECTRON MAIN] ◀── IPC Request: products:getByCategory (Category: '${category}')`);
+        }
         try {
             const products = await fetchFromAPI(`/products/category/${category}`);
-            electron_log_1.default.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${products.length} products in category '${category}'`);
+            if (IS_DEV) {
+                electron_log_1.default.info(`⚡ [ELECTRON MAIN] ──▶ IPC Response: Successfully fetched ${products.length} products in category '${category}'`);
+            }
             return products;
         }
         catch (error) {
@@ -85,16 +114,22 @@ function registerProductHandlers() {
             throw error;
         }
     });
-    electron_log_1.default.info('⚡ [ELECTRON MAIN] Product IPC handlers registered successfully ✓');
+    if (IS_DEV) {
+        electron_log_1.default.info('⚡ [ELECTRON MAIN] Product IPC handlers registered successfully ✓');
+    }
 }
 /**
  * Unregister all product-related IPC handlers (for cleanup)
  */
 function unregisterProductHandlers() {
-    electron_log_1.default.info('⚡ [ELECTRON MAIN] Unregistering product IPC handlers...');
+    if (IS_DEV) {
+        electron_log_1.default.info('⚡ [ELECTRON MAIN] Unregistering product IPC handlers...');
+    }
     electron_1.ipcMain.removeHandler('products:getAll');
     electron_1.ipcMain.removeHandler('products:getById');
     electron_1.ipcMain.removeHandler('products:getCategories');
     electron_1.ipcMain.removeHandler('products:getByCategory');
-    electron_log_1.default.info('⚡ [ELECTRON MAIN] Product IPC handlers unregistered');
+    if (IS_DEV) {
+        electron_log_1.default.info('⚡ [ELECTRON MAIN] Product IPC handlers unregistered');
+    }
 }

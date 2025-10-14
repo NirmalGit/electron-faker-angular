@@ -3,6 +3,7 @@ import { Observable, from, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Product } from '../interfaces/product.interface';
 import { IDataApi } from '../interfaces/idata-api.interface';
+import { LoggerService } from './logger.service';
 
 /**
  * Electron API Service (Desktop Mode)
@@ -12,14 +13,14 @@ import { IDataApi } from '../interfaces/idata-api.interface';
   providedIn: 'root'
 })
 export class ElectronApiService extends IDataApi {
-  constructor() {
+  constructor(private logger: LoggerService) {
     super();
     
     // Verify Electron API is available
     if (!this.isElectronAvailable()) {
-      console.warn('Electron API not available. This service should only be used in Electron environment.');
+      this.logger.warn('⚡', 'Electron API not available. This service should only be used in Electron environment.');
     } else {
-      console.log('⚡ ElectronApiService initialized - Using Electron IPC mode');
+      this.logger.info('⚡', 'ElectronApiService initialized - Using Electron IPC mode');
     }
   }
 
@@ -36,7 +37,7 @@ export class ElectronApiService extends IDataApi {
    * Get all products via Electron IPC
    */
   getAllProducts(): Observable<Product[]> {
-    console.log('⚡ [ELECTRON IPC] Fetching all products via IPC channel');
+    this.logger.log('⚡ [ELECTRON IPC]', 'Fetching all products via IPC channel');
     if (!this.isElectronAvailable()) {
       return throwError(() => new Error('Electron API not available'));
     }
@@ -51,7 +52,7 @@ export class ElectronApiService extends IDataApi {
    * @param id Product ID
    */
   getProductById(id: number): Observable<Product> {
-    console.log(`⚡ [ELECTRON IPC] Fetching product ${id} via IPC channel`);
+    this.logger.log('⚡ [ELECTRON IPC]', `Fetching product ${id} via IPC channel`);
     if (!this.isElectronAvailable()) {
       return throwError(() => new Error('Electron API not available'));
     }
@@ -65,7 +66,7 @@ export class ElectronApiService extends IDataApi {
    * Get all product categories via Electron IPC
    */
   getCategories(): Observable<string[]> {
-    console.log('⚡ [ELECTRON IPC] Fetching categories via IPC channel');
+    this.logger.log('⚡ [ELECTRON IPC]', 'Fetching categories via IPC channel');
     if (!this.isElectronAvailable()) {
       return throwError(() => new Error('Electron API not available'));
     }
@@ -80,7 +81,7 @@ export class ElectronApiService extends IDataApi {
    * @param category Category name
    */
   getProductsByCategory(category: string): Observable<Product[]> {
-    console.log(`⚡ [ELECTRON IPC] Fetching products in category '${category}' via IPC channel`);
+    this.logger.log('⚡ [ELECTRON IPC]', `Fetching products in category '${category}' via IPC channel`);
     if (!this.isElectronAvailable()) {
       return throwError(() => new Error('Electron API not available'));
     }
@@ -95,7 +96,7 @@ export class ElectronApiService extends IDataApi {
    */
   private handleError<T>(error: any): Observable<T> {
     const errorMessage = error?.message || 'Electron IPC communication error';
-    console.error('⚡ [ELECTRON IPC] Error:', errorMessage, error);
+    this.logger.error('⚡ [ELECTRON IPC]', 'Error:', errorMessage, error);
     console.error('ElectronApiService error:', errorMessage);
     return throwError(() => new Error(errorMessage));
   }

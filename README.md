@@ -175,7 +175,17 @@ ng test
 
 ## 📊 Logging & Debugging
 
-The application includes comprehensive logging to distinguish between web API calls and Electron IPC calls:
+The application includes comprehensive **environment-aware logging** that automatically adjusts based on build mode:
+
+### 🔧 Development Mode (Logs Enabled)
+- `ng serve` - Angular development server
+- `npm run electron:serve` - Electron development mode
+- **All logs visible** for debugging
+
+### 📦 Production Mode (Logs Suppressed)
+- `ng build` - Angular production build
+- `npm run electron:dist` - Electron production build
+- **Only errors logged** (performance + security)
 
 ### Log Prefixes
 - `🌐 [WEB API]` - HTTP calls to FakeStoreAPI (Browser mode)
@@ -189,13 +199,42 @@ The application includes comprehensive logging to distinguish between web API ca
 **Browser Mode (ng serve):**
 - Open browser DevTools (F12)
 - Console tab shows: `🌐 [WEB API]` logs
+- **Development**: All logs visible
+- **Production**: Only errors visible
 
 **Desktop Mode (npm run electron:serve):**
 - Electron DevTools (opens automatically in dev mode)
 - Console tab shows: `⚡ [ELECTRON IPC]` logs
 - Terminal shows: `⚡ [ELECTRON MAIN]` logs
+- **Development**: All logs visible
+- **Production**: Only errors visible
 
-**📚 See [LOGGING_GUIDE.md](./LOGGING_GUIDE.md) for detailed examples and debugging tips.**
+### 📚 Documentation
+- **[PRODUCTION_LOGGING.md](./PRODUCTION_LOGGING.md)** - Environment-based logging configuration guide
+- **[LOGGING_GUIDE.md](./LOGGING_GUIDE.md)** - Detailed examples and debugging tips
+
+### LoggerService API
+
+```typescript
+import { LoggerService } from './core/services/logger.service';
+
+constructor(private logger: LoggerService) {}
+
+// Info/Log (dev only)
+this.logger.log('🌐 [WEB API]', 'Fetching data');
+this.logger.info('⚡', 'Processing request');
+
+// Warnings (dev only)
+this.logger.warn('⚠️', 'Deprecated API');
+
+// Errors (always shown, even in production)
+this.logger.error('❌', 'Request failed:', error);
+
+// Check environment
+if (this.logger.isDev()) {
+  // Development-only code
+}
+```
 
 ## 🐛 Troubleshooting & Issue Resolution Log
 

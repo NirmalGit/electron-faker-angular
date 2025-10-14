@@ -7,6 +7,7 @@ import { IDataApi } from './core/interfaces/idata-api.interface';
 import { WebApiService } from './core/services/web-api.service';
 import { ElectronApiService } from './core/services/electron-api.service';
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
+import { LoggerService } from './core/services/logger.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -25,16 +26,17 @@ export const appConfig: ApplicationConfig = {
     {
       provide: IDataApi,
       useFactory: () => {
+        const logger = inject(LoggerService);
         const isElectron = typeof window !== 'undefined' && 
                            typeof (window as any).electronAPI !== 'undefined';
         
         if (isElectron) {
-          console.log('🖥️ Running in Electron mode - Using ElectronApiService');
-          return new ElectronApiService();
+          logger.info('🖥️', 'Running in Electron mode - Using ElectronApiService');
+          return new ElectronApiService(logger);
         } else {
-          console.log('🌐 Running in Browser mode - Using WebApiService');
+          logger.info('🌐', 'Running in Browser mode - Using WebApiService');
           const http = inject(HttpClient);
-          return new WebApiService(http);
+          return new WebApiService(http, logger);
         }
       }
     }

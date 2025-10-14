@@ -99,6 +99,17 @@
               "node_modules/bootstrap/dist/js/bootstrap.min.js"
             ]
           }
+        },
+        "e2e": {
+          "builder": "playwright-ng-schematics:playwright",
+          "options": {
+            "devServerTarget": "electron-faker-angular:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "electron-faker-angular:serve:production"
+            }
+          }
         }
       }
     }

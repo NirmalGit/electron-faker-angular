@@ -14,7 +14,8 @@
     "electron:serve": "cross-env ELECTRON_DEV=true concurrently \"ng serve\" \"npm run electron:serve:dev\"",
     "electron:serve:dev": "tsc -p electron/tsconfig.json && electron dist-electron/main.js",
     "electron:build": "tsc -p electron/tsconfig.json",
-    "electron:dist": "npm run build && npm run electron:build && electron-builder"
+    "electron:dist": "npm run build && npm run electron:build && electron-builder",
+    "e2e": "ng e2e"
   },
   "dependencies": {
     "@angular/animations": "^20.3.0",
@@ -37,6 +38,7 @@
     "@angular/build": "^20.3.4",
     "@angular/cli": "^20.3.4",
     "@angular/compiler-cli": "^20.3.0",
+    "@playwright/test": "1.56.0",
     "@types/electron": "^1.4.38",
     "@types/jasmine": "~5.1.0",
     "concurrently": "^9.2.1",
@@ -49,6 +51,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "playwright-ng-schematics": "^2.1.1",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.2"
   },

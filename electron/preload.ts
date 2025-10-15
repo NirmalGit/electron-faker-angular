@@ -33,6 +33,37 @@ contextBridge.exposeInMainWorld("electronAPI", {
      * @param category Category name
      */
     getByCategory: (category: string) => ipcRenderer.invoke("products:getByCategory", category)
+  },
+
+  // Cart APIs  
+  cart: {
+    /**
+     * Save cart data to file system
+     * @param cart Cart object to save
+     */
+    save: (cart: any) => ipcRenderer.invoke("cart:save", cart),
+
+    /**
+     * Load cart data from file system
+     */
+    load: () => ipcRenderer.invoke("cart:load"),
+
+    /**
+     * Submit order for processing
+     * @param orderRequest Order request data
+     */
+    submitOrder: (orderRequest: any) => ipcRenderer.invoke("cart:submitOrder", orderRequest),
+
+    /**
+     * Get order by ID
+     * @param orderId Order ID
+     */
+    getOrder: (orderId: string) => ipcRenderer.invoke("cart:getOrder", orderId),
+
+    /**
+     * Get all orders
+     */
+    getOrders: () => ipcRenderer.invoke("cart:getOrders")
   }
 });
 

@@ -8,6 +8,7 @@ const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const electron_log_1 = __importDefault(require("electron-log"));
 const product_ipc_1 = require("./ipc/product.ipc");
+const cart_ipc_1 = require("./ipc/cart.ipc");
 let mainWindow = null;
 // --- Load Config ---
 const isDev = !!process.env["ELECTRON_DEV"];
@@ -66,6 +67,13 @@ electron_1.app.whenReady().then(() => {
     }
     catch (err) {
         electron_log_1.default.error(`[IPC] Failed to register product handlers: ${err}`);
+    }
+    try {
+        (0, cart_ipc_1.setupCartIPC)();
+        electron_log_1.default.info("[IPC] Cart handlers registered successfully");
+    }
+    catch (err) {
+        electron_log_1.default.error(`[IPC] Failed to register cart handlers: ${err}`);
     }
     createWindow();
     electron_1.app.on("activate", () => {

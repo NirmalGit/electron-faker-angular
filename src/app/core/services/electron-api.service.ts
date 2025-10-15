@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, from, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Product } from '../interfaces/product.interface';
+import { Cart, Order, OrderRequest } from '../interfaces/cart.interface';
 import { IDataApi } from '../interfaces/idata-api.interface';
 import { LoggerService } from './logger.service';
 
@@ -30,7 +31,8 @@ export class ElectronApiService extends IDataApi {
   private isElectronAvailable(): boolean {
     return typeof window !== 'undefined' && 
            typeof (window as any).electronAPI !== 'undefined' &&
-           typeof (window as any).electronAPI.products !== 'undefined';
+           (typeof (window as any).electronAPI.products !== 'undefined' ||
+            typeof (window as any).electronAPI.cart !== 'undefined');
   }
 
   /**
@@ -88,6 +90,76 @@ export class ElectronApiService extends IDataApi {
 
     return from((window as any).electronAPI.products.getByCategory(category) as Promise<Product[]>).pipe(
       catchError(this.handleError<Product[]>)
+    );
+  }
+
+  /**
+   * Save cart data via Electron IPC
+   */
+  saveCart(cart: Cart): Observable<boolean> {
+    this.logger.log('⚡ [ELECTRON IPC]', 'Saving cart via IPC channel');
+    if (!this.isElectronAvailable()) {
+      return throwError(() => new Error('Electron API not available'));
+    }
+
+    return from((window as any).electronAPI.cart.save(cart) as Promise<boolean>).pipe(
+      catchError(this.handleError<boolean>)
+    );
+  }
+
+  /**
+   * Load cart data via Electron IPC
+   */
+  loadCart(): Observable<Cart | null> {
+    this.logger.log('⚡ [ELECTRON IPC]', 'Loading cart via IPC channel');
+    if (!this.isElectronAvailable()) {
+      return throwError(() => new Error('Electron API not available'));
+    }
+
+    return from((window as any).electronAPI.cart.load() as Promise<Cart | null>).pipe(
+      catchError(this.handleError<Cart | null>)
+    );
+  }
+
+  /**
+   * Submit order via Electron IPC
+   */
+  submitOrder(orderRequest: OrderRequest): Observable<Order> {
+    this.logger.log('⚡ [ELECTRON IPC]', 'Submitting order via IPC channel');
+    if (!this.isElectronAvailable()) {
+      return throwError(() => new Error('Electron API not available'));
+    }
+
+    return from((window as any).electronAPI.cart.submitOrder(orderRequest) as Promise<Order>).pipe(
+      catchError(this.handleError<Order>)
+    );
+  }
+
+  /**
+   * Get order by ID via Electron IPC
+   */
+  getOrder(orderId: string): Observable<Order> {
+    this.logger.log('⚡ [ELECTRON IPC]', `Getting order ${orderId} via IPC channel`);
+    if (!this.isElectronAvailable()) {
+      return throwError(() => new Error('Electron API not available'));
+    }
+
+    return from((window as any).electronAPI.cart.getOrder(orderId) as Promise<Order>).pipe(
+      catchError(this.handleError<Order>)
+    );
+  }
+
+  /**
+   * Get all orders via Electron IPC
+   */
+  getOrders(): Observable<Order[]> {
+    this.logger.log('⚡ [ELECTRON IPC]', 'Getting all orders via IPC channel');
+    if (!this.isElectronAvailable()) {
+      return throwError(() => new Error('Electron API not available'));
+    }
+
+    return from((window as any).electronAPI.cart.getOrders() as Promise<Order[]>).pipe(
+      catchError(this.handleError<Order[]>)
     );
   }
 

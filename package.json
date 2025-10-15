@@ -11,6 +11,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "deploy": "ng build --configuration production --base-href \"/electron-faker-angular/\" && cd dist\\electron-faker-angular\\browser && git init && git add -A && git commit -m \"Deploy\" && git branch -M gh-pages && git push -f https://github.com/NirmalGit/electron-faker-angular.git gh-pages",
     "electron:serve": "cross-env ELECTRON_DEV=true concurrently \"ng serve\" \"npm run electron:serve:dev\"",
     "electron:serve:dev": "tsc -p electron/tsconfig.json && electron dist-electron/main.js",
     "electron:build": "tsc -p electron/tsconfig.json",

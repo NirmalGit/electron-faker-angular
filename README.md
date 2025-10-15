@@ -2,6 +2,29 @@
 
 This project combines Angular 20 with Electron 38 to create a cross-platform desktop application. It was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.4.
 
+## ✨ Features
+
+### 🛒 Shopping Cart & Checkout System
+- **Complete E-commerce Flow**: Full shopping cart functionality with add, remove, and quantity management
+- **Multi-step Checkout**: Secure checkout process with billing, shipping, and payment forms
+- **Cross-platform Persistence**: Cart data persists across sessions in both web and desktop modes
+- **Real-time Updates**: Reactive cart badge and totals using Angular signals
+- **Responsive Design**: Mobile-friendly cart and checkout components
+- **Multiple Payment Methods**: Support for Credit/Debit cards, PayPal, and Cryptocurrency
+
+### 🖥️ Cross-Platform Support
+- **Web Browser**: Full functionality in modern web browsers
+- **Desktop Application**: Native Electron app with secure IPC communication
+- **Unified Codebase**: Same Angular components work in both environments
+- **Persistent Storage**: localStorage for web, file system for desktop
+
+### 🔧 Technical Features
+- **Angular 20**: Latest Angular with standalone components and signals
+- **Material Design**: Complete Material UI component library
+- **TypeScript**: Full type safety with comprehensive interfaces
+- **Environment Logging**: Smart logging system with dev/prod modes
+- **Secure Architecture**: Protected IPC communication in Electron mode
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -212,6 +235,8 @@ The application includes comprehensive **environment-aware logging** that automa
 ### 📚 Documentation
 - **[PRODUCTION_LOGGING.md](./PRODUCTION_LOGGING.md)** - Environment-based logging configuration guide
 - **[LOGGING_GUIDE.md](./LOGGING_GUIDE.md)** - Detailed examples and debugging tips
+- **[CHECKOUT_FLOW_DOCUMENTATION.md](./CHECKOUT_FLOW_DOCUMENTATION.md)** - Complete shopping cart and checkout implementation guide
+- **[CHECKOUT_FLOW_DIAGRAMS.md](./CHECKOUT_FLOW_DIAGRAMS.md)** - Visual flowcharts and diagrams for the checkout process
 
 ### LoggerService API
 

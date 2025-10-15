@@ -30,5 +30,31 @@ electron_1.contextBridge.exposeInMainWorld("electronAPI", {
          * @param category Category name
          */
         getByCategory: (category) => electron_1.ipcRenderer.invoke("products:getByCategory", category)
+    },
+    // Cart APIs  
+    cart: {
+        /**
+         * Save cart data to file system
+         * @param cart Cart object to save
+         */
+        save: (cart) => electron_1.ipcRenderer.invoke("cart:save", cart),
+        /**
+         * Load cart data from file system
+         */
+        load: () => electron_1.ipcRenderer.invoke("cart:load"),
+        /**
+         * Submit order for processing
+         * @param orderRequest Order request data
+         */
+        submitOrder: (orderRequest) => electron_1.ipcRenderer.invoke("cart:submitOrder", orderRequest),
+        /**
+         * Get order by ID
+         * @param orderId Order ID
+         */
+        getOrder: (orderId) => electron_1.ipcRenderer.invoke("cart:getOrder", orderId),
+        /**
+         * Get all orders
+         */
+        getOrders: () => electron_1.ipcRenderer.invoke("cart:getOrders")
     }
 });

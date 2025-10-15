@@ -1,0 +1,375 @@
+<div class="checkout-container">
+  <!-- Header -->
+  <div class="checkout-header">
+    <h1>
+      <mat-icon>payment</mat-icon>
+      Checkout
+    </h1>
+    <p>Complete your order in {{ isEmpty() ? 0 : cartSummary().itemCount }} items</p>
+  </div>
+
+  <!-- Main Content -->
+  <div class="checkout-content">
+    <!-- Checkout Forms -->
+    <div class="checkout-forms">
+      <mat-stepper #stepper [selectedIndex]="currentStep()" (selectionChange)="currentStep.set($event.selectedIndex)" orientation="vertical">
+        
+        <!-- Step 1: Billing Information -->
+        <mat-step [stepControl]="billingForm" [completed]="billingForm.valid">
+          <ng-template matStepLabel>Billing Information</ng-template>
+          
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Billing Address</mat-card-title>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <form [formGroup]="billingForm" class="billing-form">
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>First Name</mat-label>
+                    <input matInput formControlName="firstName" required>
+                    <mat-error *ngIf="billingForm.get('firstName')?.invalid && billingForm.get('firstName')?.touched">
+                      {{ getErrorMessage(billingForm, 'firstName') }}
+                    </mat-error>
+                  </mat-form-field>
+                  
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Last Name</mat-label>
+                    <input matInput formControlName="lastName" required>
+                    <mat-error *ngIf="billingForm.get('lastName')?.invalid && billingForm.get('lastName')?.touched">
+                      {{ getErrorMessage(billingForm, 'lastName') }}
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Email</mat-label>
+                    <input matInput type="email" formControlName="email" required>
+                    <mat-error *ngIf="billingForm.get('email')?.invalid && billingForm.get('email')?.touched">
+                      {{ getErrorMessage(billingForm, 'email') }}
+                    </mat-error>
+                  </mat-form-field>
+                  
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Phone (Optional)</mat-label>
+                    <input matInput formControlName="phone">
+                  </mat-form-field>
+                </div>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Street Address</mat-label>
+                  <input matInput formControlName="street" required>
+                  <mat-error *ngIf="billingForm.get('street')?.invalid && billingForm.get('street')?.touched">
+                    {{ getErrorMessage(billingForm, 'street') }}
+                  </mat-error>
+                </mat-form-field>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>City</mat-label>
+                    <input matInput formControlName="city" required>
+                    <mat-error *ngIf="billingForm.get('city')?.invalid && billingForm.get('city')?.touched">
+                      {{ getErrorMessage(billingForm, 'city') }}
+                    </mat-error>
+                  </mat-form-field>
+                  
+                  <mat-form-field appearance="outline" class="quarter-width">
+                    <mat-label>State</mat-label>
+                    <mat-select formControlName="state" required>
+                      <mat-option value="AL">Alabama</mat-option>
+                      <mat-option value="CA">California</mat-option>
+                      <mat-option value="FL">Florida</mat-option>
+                      <mat-option value="NY">New York</mat-option>
+                      <mat-option value="TX">Texas</mat-option>
+                      <!-- Add more states as needed -->
+                    </mat-select>
+                    <mat-error *ngIf="billingForm.get('state')?.invalid && billingForm.get('state')?.touched">
+                      {{ getErrorMessage(billingForm, 'state') }}
+                    </mat-error>
+                  </mat-form-field>
+                  
+                  <mat-form-field appearance="outline" class="quarter-width">
+                    <mat-label>ZIP Code</mat-label>
+                    <input matInput formControlName="zipCode" required>
+                    <mat-error *ngIf="billingForm.get('zipCode')?.invalid && billingForm.get('zipCode')?.touched">
+                      {{ getErrorMessage(billingForm, 'zipCode') }}
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+              </form>
+            </mat-card-content>
+            
+            <mat-card-actions>
+              <button mat-raised-button color="primary" [disabled]="!billingForm.valid" (click)="nextStep()">
+                Continue to Shipping
+                <mat-icon>arrow_forward</mat-icon>
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </mat-step>
+
+        <!-- Step 2: Shipping Information -->
+        <mat-step [stepControl]="shippingForm" [completed]="shippingForm.valid">
+          <ng-template matStepLabel>Shipping Information</ng-template>
+          
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Shipping Address</mat-card-title>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <div class="same-as-billing">
+                <mat-checkbox 
+                  [checked]="sameAsShipping()" 
+                  (change)="sameAsShipping.set($event.checked); copyBillingToShipping()">
+                  Same as billing address
+                </mat-checkbox>
+              </div>
+
+              <form [formGroup]="shippingForm" class="shipping-form">
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>First Name</mat-label>
+                    <input matInput formControlName="firstName" required>
+                    <mat-error *ngIf="shippingForm.get('firstName')?.invalid && shippingForm.get('firstName')?.touched">
+                      {{ getErrorMessage(shippingForm, 'firstName') }}
+                    </mat-error>
+                  </mat-form-field>
+                  
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Last Name</mat-label>
+                    <input matInput formControlName="lastName" required>
+                    <mat-error *ngIf="shippingForm.get('lastName')?.invalid && shippingForm.get('lastName')?.touched">
+                      {{ getErrorMessage(shippingForm, 'lastName') }}
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Street Address</mat-label>
+                  <input matInput formControlName="street" required>
+                  <mat-error *ngIf="shippingForm.get('street')?.invalid && shippingForm.get('street')?.touched">
+                    {{ getErrorMessage(shippingForm, 'street') }}
+                  </mat-error>
+                </mat-form-field>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>City</mat-label>
+                    <input matInput formControlName="city" required>
+                    <mat-error *ngIf="shippingForm.get('city')?.invalid && shippingForm.get('city')?.touched">
+                      {{ getErrorMessage(shippingForm, 'city') }}
+                    </mat-error>
+                  </mat-form-field>
+                  
+                  <mat-form-field appearance="outline" class="quarter-width">
+                    <mat-label>State</mat-label>
+                    <mat-select formControlName="state" required>
+                      <mat-option value="AL">Alabama</mat-option>
+                      <mat-option value="CA">California</mat-option>
+                      <mat-option value="FL">Florida</mat-option>
+                      <mat-option value="NY">New York</mat-option>
+                      <mat-option value="TX">Texas</mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="shippingForm.get('state')?.invalid && shippingForm.get('state')?.touched">
+                      {{ getErrorMessage(shippingForm, 'state') }}
+                    </mat-error>
+                  </mat-form-field>
+                  
+                  <mat-form-field appearance="outline" class="quarter-width">
+                    <mat-label>ZIP Code</mat-label>
+                    <input matInput formControlName="zipCode" required>
+                    <mat-error *ngIf="shippingForm.get('zipCode')?.invalid && shippingForm.get('zipCode')?.touched">
+                      {{ getErrorMessage(shippingForm, 'zipCode') }}
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Shipping Method</mat-label>
+                  <mat-select formControlName="shippingMethod" required>
+                    <mat-option value="standard">Standard Shipping (7-10 days) - $9.99</mat-option>
+                    <mat-option value="express">Express Shipping (3-5 days) - $19.99</mat-option>
+                    <mat-option value="overnight">Overnight Shipping (1-2 days) - $39.99</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </form>
+            </mat-card-content>
+            
+            <mat-card-actions>
+              <button mat-button (click)="previousStep()">
+                <mat-icon>arrow_back</mat-icon>
+                Back to Billing
+              </button>
+              <button mat-raised-button color="primary" [disabled]="!shippingForm.valid" (click)="nextStep()">
+                Continue to Payment
+                <mat-icon>arrow_forward</mat-icon>
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </mat-step>
+
+        <!-- Step 3: Payment Information -->
+        <mat-step [stepControl]="paymentForm" [completed]="paymentForm.valid">
+          <ng-template matStepLabel>Payment Information</ng-template>
+          
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Payment Details</mat-card-title>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <form [formGroup]="paymentForm" class="payment-form">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Payment Method</mat-label>
+                  <mat-select formControlName="method" required>
+                    <mat-option value="credit">Credit Card</mat-option>
+                    <mat-option value="debit">Debit Card</mat-option>
+                    <mat-option value="paypal">PayPal</mat-option>
+                    <mat-option value="crypto">Cryptocurrency</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <!-- Credit/Debit Card Fields -->
+                <div *ngIf="paymentForm.get('method')?.value === 'credit' || paymentForm.get('method')?.value === 'debit'">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Cardholder Name</mat-label>
+                    <input matInput formControlName="cardholderName" required>
+                    <mat-error *ngIf="paymentForm.get('cardholderName')?.invalid && paymentForm.get('cardholderName')?.touched">
+                      {{ getErrorMessage(paymentForm, 'cardholderName') }}
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Card Number</mat-label>
+                    <input matInput formControlName="cardNumber" (input)="formatCardNumber($event)" 
+                           placeholder="1234 5678 9012 3456" maxlength="19" required>
+                    <mat-error *ngIf="paymentForm.get('cardNumber')?.invalid && paymentForm.get('cardNumber')?.touched">
+                      {{ getErrorMessage(paymentForm, 'cardNumber') }}
+                    </mat-error>
+                  </mat-form-field>
+
+                  <div class="form-row">
+                    <mat-form-field appearance="outline" class="half-width">
+                      <mat-label>Expiry Date</mat-label>
+                      <input matInput formControlName="expiryDate" (input)="formatExpiryDate($event)" 
+                             placeholder="MM/YY" maxlength="5" required>
+                      <mat-error *ngIf="paymentForm.get('expiryDate')?.invalid && paymentForm.get('expiryDate')?.touched">
+                        {{ getErrorMessage(paymentForm, 'expiryDate') }}
+                      </mat-error>
+                    </mat-form-field>
+                    
+                    <mat-form-field appearance="outline" class="half-width">
+                      <mat-label>CVV</mat-label>
+                      <input matInput formControlName="cvv" maxlength="4" required>
+                      <mat-error *ngIf="paymentForm.get('cvv')?.invalid && paymentForm.get('cvv')?.touched">
+                        {{ getErrorMessage(paymentForm, 'cvv') }}
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <!-- PayPal Fields -->
+                <div *ngIf="paymentForm.get('method')?.value === 'paypal'">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>PayPal Email</mat-label>
+                    <input matInput type="email" formControlName="paypalEmail" required>
+                    <mat-error *ngIf="paymentForm.get('paypalEmail')?.invalid && paymentForm.get('paypalEmail')?.touched">
+                      {{ getErrorMessage(paymentForm, 'paypalEmail') }}
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <!-- Crypto Fields -->
+                <div *ngIf="paymentForm.get('method')?.value === 'crypto'">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Crypto Wallet Address</mat-label>
+                    <input matInput formControlName="cryptoWallet" required>
+                    <mat-error *ngIf="paymentForm.get('cryptoWallet')?.invalid && paymentForm.get('cryptoWallet')?.touched">
+                      {{ getErrorMessage(paymentForm, 'cryptoWallet') }}
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+              </form>
+            </mat-card-content>
+            
+            <mat-card-actions>
+              <button mat-button (click)="previousStep()">
+                <mat-icon>arrow_back</mat-icon>
+                Back to Shipping
+              </button>
+              <button mat-raised-button color="primary" 
+                      [disabled]="!paymentForm.valid || isProcessing()" 
+                      (click)="submitOrder()">
+                <mat-spinner *ngIf="isProcessing()" diameter="20"></mat-spinner>
+                <span *ngIf="!isProcessing()">Place Order</span>
+                <span *ngIf="isProcessing()">Processing...</span>
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </mat-step>
+      </mat-stepper>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="order-summary">
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-card-title>Order Summary</mat-card-title>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <!-- Cart Items -->
+          <div class="summary-items">
+            <div *ngFor="let item of cart().items" class="summary-item">
+              <div class="item-image">
+                <img [src]="item.product.image" [alt]="item.product.title" />
+              </div>
+              <div class="item-details">
+                <h4>{{ item.product.title }}</h4>
+                <p>Qty: {{ item.quantity }}</p>
+                <p class="item-price">${{ item.subtotal.toFixed(2) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <!-- Price Breakdown -->
+          <div class="price-breakdown">
+            <div class="price-row">
+              <span>Subtotal:</span>
+              <span>${{ cartSummary().subtotal.toFixed(2) }}</span>
+            </div>
+            
+            <div class="price-row">
+              <span>Shipping:</span>
+              <span>
+                <ng-container *ngIf="cartSummary().shipping === 0; else shippingCost">
+                  Free
+                </ng-container>
+                <ng-template #shippingCost>
+                  ${{ cartSummary().shipping.toFixed(2) }}
+                </ng-template>
+              </span>
+            </div>
+            
+            <div class="price-row">
+              <span>Tax:</span>
+              <span>${{ cartSummary().tax.toFixed(2) }}</span>
+            </div>
+            
+            <mat-divider></mat-divider>
+            
+            <div class="price-row total-row">
+              <span class="total-label">Total:</span>
+              <span class="total-amount">${{ cartSummary().total.toFixed(2) }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

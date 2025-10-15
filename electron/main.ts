@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 import log from "electron-log";
 import { registerProductHandlers } from "./ipc/product.ipc";
+import { setupCartIPC } from "./ipc/cart.ipc";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -65,6 +66,13 @@ app.whenReady().then(() => {
     log.info("[IPC] Product handlers registered successfully");
   } catch (err) {
     log.error(`[IPC] Failed to register product handlers: ${err}`);
+  }
+
+  try {
+    setupCartIPC();
+    log.info("[IPC] Cart handlers registered successfully");
+  } catch (err) {
+    log.error(`[IPC] Failed to register cart handlers: ${err}`);
   }
   
   createWindow();

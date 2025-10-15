@@ -52,24 +52,23 @@
               class="product-image">
           </div>
           <mat-card-content>
-            <h3 class="product-title">{{ truncateText(product.title, 60) }}</h3>
+            <h3 class="product-title">{{ truncateText(product.title, 40) }}</h3>
             <p class="product-category">{{ product.category }}</p>
-            <p class="product-description">{{ truncateText(product.description, 80) }}</p>
             <div class="product-footer">
               <div class="product-price">${{ product.price.toFixed(2) }}</div>
               <div class="product-rating">
                 <mat-icon class="rating-icon">star</mat-icon>
-                <span>{{ product.rating.rate }} ({{ product.rating.count }})</span>
+                <span>{{ product.rating.rate.toFixed(1) }}</span>
               </div>
             </div>
           </mat-card-content>
           <mat-card-actions>
-            <button mat-raised-button color="primary" [routerLink]="['/products', product.id]">
+            <button mat-raised-button color="primary" [routerLink]="['/products', product.id]" size="small">
               <mat-icon>visibility</mat-icon>
-              View Details
+              View
             </button>
-            <button mat-button>
-              <mat-icon>shopping_cart</mat-icon>
+            <button mat-button color="accent" (click)="addToCart(product)" size="small">
+              <mat-icon>add_shopping_cart</mat-icon>
               Add to Cart
             </button>
           </mat-card-actions>

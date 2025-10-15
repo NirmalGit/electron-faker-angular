@@ -1,0 +1,459 @@
+.checkout-container {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.checkout-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  
+  h1 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem 0;
+    color: #1976d2;
+    font-size: 2rem;
+    font-weight: 500;
+    
+    mat-icon {
+      font-size: 2rem;
+      width: 2rem;
+      height: 2rem;
+    }
+  }
+  
+  p {
+    color: #666;
+    margin: 0;
+    font-size: 1.1rem;
+  }
+}
+
+.checkout-content {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 2rem;
+  align-items: start;
+}
+
+.checkout-forms {
+  .mat-stepper-vertical {
+    background: transparent;
+    
+    .mat-step-header {
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      
+      &:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+    }
+    
+    .mat-step-content {
+      margin-left: 0;
+      margin-top: 0;
+      border: none;
+      padding: 0;
+    }
+  }
+  
+  mat-card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    
+    mat-card-header {
+      background: linear-gradient(135deg, #1976d2, #1565c0);
+      color: white;
+      border-radius: 12px 12px 0 0;
+      margin: -24px -24px 0 -24px;
+      padding: 1.5rem 1.5rem;
+      
+      mat-card-title {
+        font-size: 1.25rem;
+        font-weight: 500;
+        margin: 0;
+      }
+    }
+    
+    mat-card-content {
+      padding: 1.5rem;
+    }
+    
+    mat-card-actions {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      button {
+        min-width: 140px;
+        
+        mat-icon {
+          margin-left: 0.5rem;
+          margin-right: 0.5rem;
+          font-size: 1.2rem;
+          width: 1.2rem;
+          height: 1.2rem;
+        }
+      }
+    }
+  }
+}
+
+// Form Styles
+.billing-form,
+.shipping-form,
+.payment-form {
+  .form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  .full-width {
+    width: 100%;
+  }
+  
+  .half-width {
+    flex: 1;
+  }
+  
+  .quarter-width {
+    flex: 0 0 30%;
+  }
+  
+  mat-form-field {
+    margin-bottom: 1rem;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.same-as-billing {
+  margin-bottom: 1.5rem;
+  
+  mat-checkbox {
+    .mat-checkbox-label {
+      font-size: 1rem;
+      color: #333;
+    }
+  }
+}
+
+// Order Summary
+.order-summary {
+  position: sticky;
+  top: 2rem;
+  
+  .summary-card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    
+    mat-card-header {
+      background: linear-gradient(135deg, #4caf50, #45a049);
+      color: white;
+      border-radius: 12px 12px 0 0;
+      margin: -24px -24px 0 -24px;
+      padding: 1.5rem;
+      
+      mat-card-title {
+        font-size: 1.2rem;
+        font-weight: 500;
+        margin: 0;
+      }
+    }
+    
+    mat-card-content {
+      padding: 1.5rem;
+    }
+  }
+}
+
+.summary-items {
+  margin-bottom: 1.5rem;
+  
+  .summary-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    .item-image {
+      flex-shrink: 0;
+      
+      img {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid #e0e0e0;
+      }
+    }
+    
+    .item-details {
+      flex: 1;
+      min-width: 0;
+      
+      h4 {
+        margin: 0 0 0.25rem 0;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #333;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #666;
+        
+        &.item-price {
+          color: #1976d2;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+}
+
+.price-breakdown {
+  .price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    font-size: 0.95rem;
+    
+    &.total-row {
+      padding: 1rem 0 0.5rem 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      
+      .total-label {
+        color: #333;
+      }
+      
+      .total-amount {
+        color: #1976d2;
+        font-size: 1.2rem;
+      }
+    }
+    
+    span:first-child {
+      color: #666;
+    }
+    
+    span:last-child {
+      color: #333;
+      font-weight: 500;
+    }
+  }
+}
+
+// Loading States
+.mat-spinner {
+  margin-right: 0.5rem;
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .checkout-container {
+    padding: 1rem;
+  }
+  
+  .checkout-content {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .order-summary {
+    position: static;
+    order: -1;
+    
+    .summary-card {
+      margin-bottom: 1rem;
+    }
+  }
+  
+  .checkout-header {
+    h1 {
+      font-size: 1.5rem;
+      
+      mat-icon {
+        font-size: 1.5rem;
+        width: 1.5rem;
+        height: 1.5rem;
+      }
+    }
+  }
+  
+  .checkout-forms {
+    .form-row {
+      flex-direction: column;
+      gap: 0;
+      
+      .quarter-width,
+      .half-width {
+        flex: none;
+        width: 100%;
+      }
+    }
+    
+    mat-card-actions {
+      flex-direction: column;
+      gap: 0.75rem;
+      
+      button {
+        width: 100%;
+        order: 2;
+        
+        &[color="primary"] {
+          order: 1;
+        }
+      }
+    }
+  }
+  
+  .summary-items {
+    .summary-item {
+      .item-details {
+        h4 {
+          white-space: normal;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .checkout-container {
+    padding: 0.5rem;
+  }
+  
+  .checkout-header {
+    margin-bottom: 1rem;
+  }
+  
+  .checkout-forms {
+    mat-card {
+      mat-card-header,
+      mat-card-content,
+      mat-card-actions {
+        padding: 1rem;
+      }
+      
+      mat-card-header {
+        margin: -16px -16px 0 -16px;
+      }
+    }
+  }
+  
+  .summary-items {
+    .summary-item {
+      gap: 0.75rem;
+      
+      .item-image img {
+        width: 40px;
+        height: 40px;
+      }
+    }
+  }
+}
+
+// Form Field Animations
+mat-form-field {
+  transition: all 0.3s ease;
+  
+  &.mat-focused {
+    transform: translateY(-2px);
+  }
+}
+
+// Button Animations
+button {
+  transition: all 0.3s ease;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+}
+
+// Card Hover Effects
+mat-card {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+// Error States
+mat-error {
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+// Success States
+.mat-step-header.cdk-step-completed {
+  .mat-step-icon {
+    background-color: #4caf50;
+  }
+}
+
+// Custom Stepper Styling
+.mat-stepper-vertical .mat-step-header .mat-step-icon-selected {
+  background-color: #1976d2;
+}
+
+.mat-stepper-vertical .mat-step-header .mat-step-icon-state-edit {
+  background-color: #ff9800;
+}
+
+// Form Focus States
+.mat-form-field.mat-focused {
+  .mat-form-field-outline-thick {
+    color: #1976d2;
+  }
+}
+
+// Custom scrollbar for webkit browsers
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}

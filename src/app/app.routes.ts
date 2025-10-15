@@ -19,6 +19,14 @@ export const routes: Routes = [
     loadComponent: () => import('./features/products/product-detail/product-detail.component').then(m => m.ProductDetailComponent)
   },
   {
+    path: 'cart',
+    loadComponent: () => import('./features/cart/cart.component').then(m => m.CartComponent)
+  },
+  {
+    path: 'checkout',
+    loadComponent: () => import('./features/checkout/checkout.component').then(m => m.CheckoutComponent)
+  },
+  {
     path: '**',
     redirectTo: '/dashboard'
   }

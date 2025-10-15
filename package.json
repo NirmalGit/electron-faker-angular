@@ -41,6 +41,7 @@
     "@playwright/test": "1.56.0",
     "@types/electron": "^1.4.38",
     "@types/jasmine": "~5.1.0",
+    "angular-cli-ghpages": "^2.0.3",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "electron": "^38.2.2",

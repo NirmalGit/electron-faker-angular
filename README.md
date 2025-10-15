@@ -1,6 +1,6 @@
 #  Scenario-Based Flows with Diagrams
 
-Below are the most important flows in the application, step-by-step explanation. These will help new team members visualize and understand how data and events move through the system.
+Below are the most important flows in the application,step-by-step explanation. These will help new team members visualize and understand how data and events move through the system.
 
 ---
 
@@ -108,7 +108,7 @@ sequenceDiagram
 ---
 
 Each diagram above matches a real scenario in the app. For every user action, follow the arrows to see how the request travels through Angular, the preload script, Electron's main process, and (if needed) external APIs, before returning data to the UI.
-# �🖱️ Example Flow: Clicking "Add to Cart" in Electron
+# 🖱️ Example Flow: Clicking "Add to Cart" in Electron
 
 Let's walk through what happens when a user clicks the "Add to Cart" button in the Electron desktop app:
 
@@ -374,7 +374,7 @@ electron-faker-angular/
 ... (other docs and markdown files)
 ```
 
-## 📊 Project Structure (Mermaid Diagram)
+## 📊 Project Structure 
 
 ```mermaid
 flowchart TD
@@ -400,7 +400,7 @@ flowchart TD
 
 This diagram visually represents the main folders and files in your project. You can view it with a Mermaid preview extension in VS Code or on supported platforms.
 
-## ⚡ Electron Main Process Workflow (Mermaid)
+## ⚡ Electron Main Process Workflow 
 
 ```mermaid
 flowchart TD

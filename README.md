@@ -1,3 +1,223 @@
+#  Scenario-Based Flows with Diagrams
+
+Below are the most important flows in the application, step-by-step explanation. These will help new team members visualize and understand how data and events move through the system.
+
+---
+
+
+## 1. Product Loading Flow
+
+### 🖥️ Desktop (Electron)
+```mermaid
+sequenceDiagram
+  participant User
+  participant Angular as Renderer (Angular)
+  participant Preload as Preload Script
+  participant Main as Electron Main Process
+  participant API as FakeStoreAPI
+  User->>Angular: Open Dashboard
+  Angular->>Preload: window.electronAPI.products.getAll()
+  Preload->>Main: ipcRenderer.invoke('products:getAll')
+  Main->>API: Fetch products from FakeStoreAPI
+  API-->>Main: Return product list
+  Main-->>Preload: Return product list
+  Preload-->>Angular: Resolve promise with products
+  Angular-->>User: Display products in UI
+```
+
+### ☁️ Web (Cloud)
+```mermaid
+sequenceDiagram
+  participant User
+  participant Angular as Renderer (Angular)
+  participant API as FakeStoreAPI
+  User->>Angular: Open Dashboard
+  Angular->>API: HTTP GET /products
+  API-->>Angular: Return product list
+  Angular-->>User: Display products in UI
+```
+
+---
+
+
+## 2. Add to Cart Flow
+
+### 🖥️ Desktop (Electron)
+```mermaid
+sequenceDiagram
+  participant User
+  participant Angular as Renderer (Angular)
+  participant Preload as Preload Script
+  participant Main as Electron Main Process
+  User->>Angular: Click "Add to Cart"
+  Angular->>Preload: window.electronAPI.cart.add(product)
+  Preload->>Main: ipcRenderer.invoke('cart:add', product)
+  Main->>Main: Update cart data (file/memory)
+  Main-->>Preload: Return updated cart
+  Preload-->>Angular: Resolve promise with updated cart
+  Angular-->>User: Update cart badge and UI
+```
+
+### ☁️ Web (Cloud)
+```mermaid
+sequenceDiagram
+  participant User
+  participant Angular as Renderer (Angular)
+  participant API as FakeStoreAPI
+  User->>Angular: Click "Add to Cart"
+  Angular->>API: HTTP POST /cart/add
+  API-->>Angular: Return updated cart
+  Angular-->>User: Update cart badge and UI
+```
+
+---
+
+
+## 3. Authentication Flow
+
+### 🖥️ Desktop (Electron)
+```mermaid
+sequenceDiagram
+  participant User
+  participant Angular as Renderer (Angular)
+  participant Preload as Preload Script
+  participant Main as Electron Main Process
+  participant AuthAPI as Auth API Server
+  User->>Angular: Submit login form
+  Angular->>Preload: window.electronAPI.auth.login(credentials)
+  Preload->>Main: ipcRenderer.invoke('auth:login', credentials)
+  Main->>AuthAPI: POST /auth/login (with credentials)
+  AuthAPI-->>Main: Set HttpOnly cookie, return user info
+  Main-->>Preload: Return login result
+  Preload-->>Angular: Resolve promise with user info
+  Angular-->>User: Navigate to dashboard, update UI
+```
+
+### ☁️ Web (Cloud)
+```mermaid
+sequenceDiagram
+  participant User
+  participant Angular as Renderer (Angular)
+  participant AuthAPI as Auth API Server
+  User->>Angular: Submit login form
+  Angular->>AuthAPI: HTTP POST /auth/login (with credentials)
+  AuthAPI-->>Angular: Set HttpOnly cookie, return user info
+  Angular-->>User: Navigate to dashboard, update UI
+```
+
+---
+
+Each diagram above matches a real scenario in the app. For every user action, follow the arrows to see how the request travels through Angular, the preload script, Electron's main process, and (if needed) external APIs, before returning data to the UI.
+# �🖱️ Example Flow: Clicking "Add to Cart" in Electron
+
+Let's walk through what happens when a user clicks the "Add to Cart" button in the Electron desktop app:
+
+1. **User Action (Angular UI)**
+  - User clicks "Add to Cart" on a product card in the Angular UI.
+  - This triggers a method in the Angular component, e.g., `addToCart(product)`.
+
+2. **Angular Service Call**
+  - The component calls a method in the `CartService`, e.g., `cartService.addToCart(product)`.
+  - `CartService` checks if the app is running in Electron by detecting `window.electronAPI`.
+
+3. **IPC Call via Preload**
+  - If in Electron, `CartService` calls `window.electronAPI.cart.add(product)` (as defined in `preload.ts` and typed in `electron.d.ts`).
+  - The preload script uses `ipcRenderer.invoke('cart:add', product)` to send the request to the Electron main process.
+
+4. **Electron Main Process Handler**
+  - In `electron/ipc/cart.ipc.ts`, the main process listens for `'cart:add'` events.
+  - It updates the cart data (e.g., in a file or memory) and returns the updated cart state.
+
+5. **Response Back to Angular**
+  - The main process sends the updated cart back through IPC.
+  - The preload script resolves the promise, and Angular receives the new cart data.
+
+6. **UI Update**
+  - `CartService` updates its signals/state with the new cart.
+  - The Angular UI automatically updates the cart badge, totals, and cart view.
+
+**Summary:**
+- The click triggers a method in Angular, which calls a service, which (in Electron) uses IPC via the preload script to update data in the Electron main process. The result flows back to Angular, updating the UI.
+
+This pattern is used for all cross-process actions (e.g., loading products, updating cart, authentication), ensuring a secure and maintainable architecture.
+# 🧩 How Electron, Preload, Angular, and Typings Work Together
+
+This section explains the complete flow for new team members, including how the Electron main process, preload script, Angular app, and typings (`electron.d.ts`) interact to load products and handle IPC calls.
+
+## 1. Electron Main Process (`electron/main.ts`)
+- Starts the Electron app and creates the main application window.
+- Loads the Angular app:
+  - In development: waits for the Angular dev server (`http://localhost:4200`), with retry logic.
+  - In production: loads the built Angular files from `dist/electron-faker-angular/browser/index.html`.
+- Registers IPC handlers (e.g., for product data) before creating the window.
+- Loads environment-specific config (dev/prod) and sets up logging.
+
+## 2. Preload Script (`electron/preload.ts`)
+- Runs in a secure context between Electron and Angular (renderer).
+- Exposes a safe `window.electronAPI` object to Angular using `contextBridge`.
+- Defines functions like `getAppVersion`, `getAppConfig`, and `products.getAll`, which internally use `ipcRenderer.invoke` to call main process handlers.
+- Prevents direct Node.js access in the renderer for security.
+
+## 3. Typings (`src/typings/electron.d.ts`)
+- Declares the TypeScript types for `window.electronAPI`.
+- Ensures Angular code gets full type safety and autocompletion for all Electron APIs exposed via preload.
+- Example:
+  ```typescript
+  interface Window {
+    electronAPI: {
+      getAppVersion: () => Promise<string>;
+      getAppConfig: () => Promise<any>;
+      quitApp: () => void;
+      products: {
+        getAll: () => Promise<Product[]>;
+        getById: (id: number) => Promise<Product>;
+        getCategories: () => Promise<string[]>;
+        getByCategory: (category: string) => Promise<Product[]>;
+      };
+    };
+  }
+  ```
+
+## 4. Angular App (Renderer)
+- Detects if `window.electronAPI` exists (i.e., running in Electron).
+- Calls `window.electronAPI.products.getAll()` to fetch products, which triggers an IPC call to the main process.
+- Uses Angular services and signals to manage product data and UI updates.
+
+## 5. IPC Flow Example: Loading Products
+1. Angular calls `window.electronAPI.products.getAll()`.
+2. Preload script uses `ipcRenderer.invoke('products:getAll')` to send the request to the main process.
+3. Main process (`main.ts` and `ipc/product.ipc.ts`) handles `'products:getAll'`, fetches data (e.g., from FakeStoreAPI), and returns it.
+4. Preload receives the result and resolves the promise.
+5. Angular receives the product data and updates the UI.
+
+This architecture ensures strong security, type safety, and a clear separation of concerns between Electron, Angular, and the APIs they use to communicate.
+# 📚 Recommended Reading Sequence for New Developers
+
+If you are new to Electron.js or this project, follow this sequence to understand the flow, architecture, and how calls happen between Angular and Electron:
+
+1. **README.md**
+  - Start here for a high-level overview, project structure, and visual architecture diagrams (Mermaid).
+  - Learn how to run the app in both web and desktop (Electron) modes.
+
+2. **ARCHITECTURE_DIAGRAMS.md**
+  - See system-level diagrams showing how Electron, Angular, and IPC (inter-process communication) interact.
+
+3. **CHECKOUT_FLOW_DOCUMENTATION.md**
+  - Read this for a step-by-step explanation of the shopping cart and checkout logic, including how Electron and Angular communicate.
+
+4. **CHECKOUT_FLOW_DIAGRAMS.md**
+  - Review visual flowcharts and diagrams for the checkout and cart process.
+
+5. **AUTH_IMPLEMENTATION_GUIDE.md**
+  - Understand the authentication flow, secure cookie handling, and route protection.
+
+6. **PRODUCTION_LOGGING.md** and **LOGGING_GUIDE.md**
+  - Learn how to debug, trace, and monitor the application in both development and production environments.
+
+7. **HTTPONLY_COOKIE_MIGRATION.md** (Optional, for security details)
+  - Deep dive into secure authentication and backend requirements.
+
+This order will help you build a strong understanding of both the big picture and the technical details, even if you have never used Electron before.
 # Electron + Angular Desktop Application
 
 This project combines Angular 20 with Electron 38 to create a cross-platform desktop application. It was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.4.
@@ -59,26 +279,99 @@ Once the server is running, open your browser and navigate to `http://localhost:
 
 ## 📁 Project Structure
 
+
 ```
 electron-faker-angular/
-├── dist-electron/          # Compiled Electron files
-│   ├── main.js             # Main Electron process
-│   └── preload.js          # Preload script
-├── electron/               # Electron TypeScript source
-│   ├── main.ts             # Main process source
-│   ├── preload.ts          # Preload script source
-│   └── tsconfig.json       # Electron TypeScript config
-├── src/                    # Angular application source
-│   ├── app/                # Angular app components
-│   ├── typings/            # TypeScript definitions
-│   ├── index.html          # Main HTML file
-│   ├── main.ts             # Angular bootstrap
-│   └── styles.scss         # Global styles
-├── public/                 # Static assets
-├── config/                 # Environment configuration files
-│   ├── config.dev.json     # Development config
-│   └── config.prod.json    # Production config
-└── package.json            # Project dependencies and scripts
+├── angular.json
+├── package.json
+├── package-lock.json
+├── README.md
+├── structure.txt
+├── .gitignore
+├── .vscode/
+├── dist-electron/
+│   ├── main.js
+│   ├── preload.js
+│   └── ipc/
+│       ├── cart.ipc.js
+│       └── product.ipc.js
+├── electron/
+│   ├── main.ts
+│   ├── preload.ts
+│   ├── tsconfig.json
+│   └── ipc/
+│       ├── cart.ipc.ts
+│       └── product.ipc.ts
+├── public/
+│   └── favicon.ico
+├── src/
+│   ├── app/
+│   │   ├── app.config.ts
+│   │   ├── app.html
+│   │   ├── app.routes.ts
+│   │   ├── app.scss
+│   │   ├── app.spec.ts
+│   │   ├── app.ts
+│   │   ├── core/
+│   │   │   ├── interfaces/
+│   │   │   │   ├── app-config.interface.ts
+│   │   │   │   ├── cart.interface.ts
+│   │   │   │   ├── idata-api.interface.ts
+│   │   │   │   └── product.interface.ts
+│   │   │   ├── services/
+│   │   │   │   ├── auth.service.ts
+│   │   │   │   ├── cart.service.ts
+│   │   │   │   ├── electron-api.service.ts
+│   │   │   │   ├── logger.service.ts
+│   │   │   │   ├── product.service.ts
+│   │   │   │   ├── token.service.ts
+│   │   │   │   └── web-api.service.ts
+│   │   │   ├── guards/
+│   │   │   └── interceptors/
+│   │   ├── features/
+│   │   │   ├── auth/
+│   │   │   ├── cart/
+│   │   │   │   ├── cart.component.html
+│   │   │   │   ├── cart.component.scss
+│   │   │   │   └── cart.component.ts
+│   │   │   ├── checkout/
+│   │   │   │   ├── checkout.component.html
+│   │   │   │   ├── checkout.component.scss
+│   │   │   │   └── checkout.component.ts
+│   │   │   ├── dashboard/
+│   │   │   ├── products/
+│   │   │   │   ├── product-list/
+│   │   │   │   │   ├── product-list.component.html
+│   │   │   │   │   ├── product-list.component.scss
+│   │   │   │   │   └── product-list.component.ts
+│   │   │   │   └── product-detail/
+│   │   │   └── ...
+│   │   ├── shared/
+│   │   │   └── components/
+│   │   │       ├── navbar/
+│   │   │       │   └── navbar.component.ts
+│   │   │       ├── loading-spinner/
+│   │   │       │   └── loading-spinner.component.ts
+│   │   │       └── error-message/
+│   │   │           └── error-message.component.ts
+│   ├── typings/
+│   │   └── electron.d.ts
+│   ├── index.html
+│   ├── main.ts
+│   └── styles.scss
+├── config/
+│   ├── config.dev.json
+│   └── config.prod.json
+├── release/
+│   ├── Electron Faker Angular Setup 1.0.0.exe
+│   ├── win-unpacked/
+│   │   └── Electron Faker Angular.exe
+│   └── ...
+├── test.ps1
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.spec.json
+... (other docs and markdown files)
 ```
 
 ## 📊 Project Structure (Mermaid Diagram)
@@ -168,7 +461,37 @@ This diagram shows the high-level architecture and data flow between Electron's 
 - `ng build` - Build Angular application for production
 - `ng test` - Run unit tests
 
-## 🔧 Building for Production
+
+## 🏗️ Building for Production & Distribution
+
+### Important: Asset Loading in Electron
+
+When building for Electron, always use:
+
+```bash
+ng build --base-href="./"
+```
+
+or run:
+
+```bash
+npm run electron:dist
+```
+
+This ensures all static assets (JS, CSS, images) load correctly in the packaged desktop app. If you see a blank screen or `net::ERR_FILE_NOT_FOUND` errors, check that `--base-href="./"` is set in your build script.
+
+### Output Files & Distribution
+
+- The Windows installer and unpacked .exe are generated in the `release/` folder:
+  - `release/Electron Faker Angular Setup 1.0.0.exe` (installer)
+  - `release/win-unpacked/Electron Faker Angular.exe` (portable .exe)
+- Distribute only the files in `release/`—do not commit these to source control.
+
+### .gitignore & Build Artifacts
+
+- `dist-electron/` and `release/` are ignored by default (see `.gitignore`).
+- If you see Git warnings about line endings (LF/CRLF) in build output, it is safe to ignore them. These files should not be tracked by Git.
+
 
 ### Angular Build
 ```bash
@@ -185,7 +508,35 @@ npm run electron:build
 npm run electron:dist
 ```
 
-This will compile your project and create distributable packages in the `dist/` directory.
+This will compile your project and create distributable packages in the `release/` directory for Windows. The Angular production build will be in `dist/electron-faker-angular/`.
+## ✅ Cross-Platform Testing Checklist
+
+- [x] Web mode: `ng serve` — verify all features in browser
+- [x] Desktop mode: `npm run electron:serve` — verify all features in Electron
+- [x] Production .exe: `npm run electron:dist` — test the generated Windows executable
+- [x] Cart, checkout, and authentication work in both modes
+- [x] No asset loading or blank screen issues in production
+
+## 🛠️ Troubleshooting
+
+### Blank Screen or Asset Loading Errors in Electron
+
+- **Symptom:** App window is blank, console shows `net::ERR_FILE_NOT_FOUND` for JS/CSS
+- **Solution:** Ensure Angular is built with `--base-href="./"` (use `npm run electron:dist`)
+
+### Git Warnings on Build Output
+
+- **Symptom:** "LF will be replaced by CRLF" or similar warnings for files in `dist-electron/`
+- **Solution:** These are safe to ignore. Make sure `dist-electron/` and `release/` are in `.gitignore` and not committed.
+
+### Windows Executable Not Working
+
+- **Symptom:** Double-clicking `.exe` does nothing or shows errors
+- **Solution:** Ensure all dependencies are installed, and that you are running the `.exe` from `release/win-unpacked/` or after installing with the provided installer.
+
+## 🔒 Security Note
+
+This application uses **HttpOnly cookies** for authentication, providing strong protection against XSS and CSRF. No tokens are stored in JavaScript-accessible storage. See [HTTPONLY_COOKIE_MIGRATION.md](./HTTPONLY_COOKIE_MIGRATION.md) for details.
 
 ## 🧪 Testing
 
